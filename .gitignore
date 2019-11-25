@@ -10,3 +10,23 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# bin dir.
+bin
+
+# Logins
+logins/*
+
+# App outputs
+*.csv
+*.bash
+*.txt
+*.json
+
+# Apple files
+.DS_Store
+*/.DS_Store
+
+# Databases
+*.db
+*.sqlite3
