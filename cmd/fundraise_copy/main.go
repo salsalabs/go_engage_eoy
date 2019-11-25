@@ -13,48 +13,6 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-//FetchSupporter retrieves a supporter record for Engage using the SupporterID
-//in the provided record.
-func FetchSupporter(e *goengage.Environment, k string) (*goengage.Supporter, error) {
-	payload := goengage.SupporterSearchPayload{
-		Identifiers:    []string{k},
-		IdentifierType: goengage.SupporterIDType,
-		Offset:         int32(0),
-		Count:          e.Metrics.MaxBatchSize,
-	}
-	request := goengage.SupporterSearch{
-		Header:  goengage.RequestHeader{},
-		Payload: payload,
-	}
-	var response goengage.SupporterSearchResults
-	n := goengage.NetOp{
-		Host:     e.Host,
-		Endpoint: goengage.SearchSupporter,
-		Method:   goengage.SearchMethod,
-		Token:    e.Token,
-		Request:  &request,
-		Response: &response,
-	}
-	err := n.Do()
-	if err != nil {
-		return nil, err
-	}
-	count := int32(len(response.Payload.Supporters))
-	fmt.Printf("Found %d supporters that matched supporterID %v\n", len(response.Payload.Supporters), k)
-	if count == 0 {
-		return nil, nil
-	}
-	for _, s := range response.Payload.Supporters {
-		fmt.Printf("FetchSupporter: %v was created %v\n", s.SupporterID, s.CreatedDate)
-		// This should always be true, BTW`
-		if s.SupporterID == k {
-			if s.Result == goengage.Found {
-				return &s, nil
-			}
-		}
-	}
-	return nil, nil
-}
 func main() {
 	var (
 		app   = kingpin.New("gorm-activity-copy", "A command-line app to copy fundraising activities to SQLite via GORM")
@@ -135,7 +93,7 @@ func main() {
 				fmt.Printf("%v local db lookup returned %v, Created %v\n", s.SupporterID, s.Result, s.CreatedDate)
 				if s.CreatedDate == nil {
 					fmt.Printf("%v is  new\n", s.SupporterID)
-					t, err := FetchSupporter(e, r.SupporterID)
+					t, err := goengage.FetchSupporter(e, r.SupporterID)
 					if err != nil {
 						log.Fatal(err)
 					}
