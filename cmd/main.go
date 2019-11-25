@@ -58,15 +58,13 @@ func main() {
 	}
 	count := int32(rqt.Payload.Count)
 	for count > 0 {
-		fmt.Printf("Searching from offset %d\n", rqt.Payload.Offset)
 		err := n.Do()
 		if err != nil {
 			panic(err)
 		}
 		count = int32(len(resp.Payload.Activities))
-		fmt.Printf("Read %d activities from offset %d\n", count, rqt.Payload.Offset)
 		rqt.Payload.Offset = rqt.Payload.Offset + count
-		fmt.Printf("%20s %-36s %-10s %-10s %7s %7s %5s\n",
+		fmt.Printf("%-20s %-36s %-10s %-10s %7s %7s %5s\n",
 			"Name",
 			"ActivityDate",
 			"ActivityType",
@@ -90,15 +88,12 @@ func main() {
 					SupporterID: r.SupporterID,
 				}
 				db.Where("supporter_id = ?", r.SupporterID).First(&s)
-				fmt.Printf("%v local db lookup returned %v, Created %v\n", s.SupporterID, s.Result, s.CreatedDate)
 				if s.CreatedDate == nil {
-					fmt.Printf("%v is  new\n", s.SupporterID)
 					t, err := goengage.FetchSupporter(e, r.SupporterID)
 					if err != nil {
 						log.Fatal(err)
 					}
 					if t == nil {
-						fmt.Printf("%v does not match supporter\n", s.SupporterID)
 						x := time.Now()
 						s.CreatedDate = &x
 					} else {
@@ -106,7 +101,6 @@ func main() {
 					}
 					db.Create(&s)
 				} else {
-					fmt.Printf("%v not new\n", s.SupporterID)
 					db.First(&s)
 				}
 				name := fmt.Sprintf(`"%v %v"`, s.FirstName, s.LastName)
