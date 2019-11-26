@@ -1,21 +1,19 @@
-package go_engage_eoy
-
-import "time"
+package eoy
 
 //GivingStat is used to store the usual statistics about a set of donations.
 type GivingStat struct {
-	Key string
-	//Type is ONE_TIME, RECURRING, REFUND, OFFLINE, ALL
-	Type string
-	Max  struct {
-		At     *time.Time `gorm:"max_at"`
-		Amount float64    `gorm:"max_amount"`
-	}
-	Min struct {
-		At     *time.Time `gorm:"min_at"`
-		Amount float64    `gorm:"min_amount"`
-	}
-	Count   int32
-	Average float64
-	Sum     float64
+	// supporterID, activityPageID, Year, Year-Month
+	Key             string
+	AllCount        int32
+	AllAmount       float64
+	OneTimeCount    int32
+	OneTimeAmount   float64
+	RecurringCount  int32
+	RecurringAmount float64
+	OfflineCount    int32
+	OfflineAmount   float64
+	RefundsCount    int32
+	RefundsAmount   float64
+	Largest         float64
+	Smallest        float64
 }
