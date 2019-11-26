@@ -9,6 +9,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	eoy "github.com/salsalabs/goengage-eoy/pkg"
 	goengage "github.com/salsalabs/goengage/pkg"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -35,6 +36,7 @@ func main() {
 	db.AutoMigrate(&goengage.Supporter{})
 	db.AutoMigrate(&goengage.Contact{})
 	db.AutoMigrate(&goengage.CustomFieldValue{})
+	db.AutoMigrate(&eoy.GivingStat{})
 
 	payload := goengage.ActivityRequestPayload{
 		Type:         goengage.FundraiseType,
