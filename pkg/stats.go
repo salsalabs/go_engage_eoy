@@ -1,7 +1,6 @@
 package eoy
 
 import (
-	"fmt"
 	"time"
 
 	goengage "github.com/salsalabs/goengage/pkg"
@@ -10,11 +9,14 @@ import (
 //Stats reads a channel of Stats to retrieve ActivityIDs.  Those
 //are used to populate the Activity table in the database.
 func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
+	rt.Log.Println("Stats: start")
 	for true {
 		r, ok := <-c
 		if !ok {
 			break
 		}
+		rt.Log.Printf("Stats: %v\n", r.ActivityID)
+
 		g := GivingStat{}
 		rt.DB.Where("id = ?", r.ActivityID).First(&g)
 		if g.CreatedDate == nil {
@@ -23,7 +25,8 @@ func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			g.CreatedDate = &t
 			rt.DB.Create(&g)
 		}
-		fmt.Printf("TODO: Fill in stats for %+v\n", g)
 	}
+	rt.Log.Println("Stats: end")
+
 	return nil
 }

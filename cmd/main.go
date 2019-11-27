@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -12,9 +13,13 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
+const sleepDuration = "10s"
+
+type actor func(rt *eoy.Runtime, c chan goengage.Fundraise) (err error)
+
 func main() {
 	var (
-		app   = kingpin.New("gorm-activity-copy", "A command-line app to copy fundraising activities to SQLite via GORM")
+		app   = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
 		login = app.Flag("login", "YAML file with API token").Required().String()
 	)
 	app.Parse(os.Args[1:])
@@ -37,29 +42,45 @@ func main() {
 	db.AutoMigrate(&eoy.ActivityForm{})
 	db.AutoMigrate(&eoy.GivingStat{})
 
+	//Channel used by the downstream processors...
 	var channels []chan goengage.Fundraise
 	for i := 0; i < 5; i++ {
 		c := make(chan goengage.Fundraise)
 		channels = append(channels, c)
 	}
-	rt := eoy.NewRuntime(e, db, channels)
-	functions := []func(rt *eoy.Runtime, c chan goengage.Fundraise) (err error) {
+	functions := []actor{
 		eoy.Activity,
 		eoy.Form,
 		eoy.Stats,
 		eoy.Supporter,
 		eoy.Transaction,
 	}
+
+	done := make(chan bool)
+	rt := eoy.NewRuntime(e, db, channels)
 	var wg sync.WaitGroup
-	for i, r := range functions {
+	for i := range functions {
 		go (func(i int, rt *eoy.Runtime, wg *sync.WaitGroup) {
 			wg.Add(1)
-			defer wg.Done()
 			c := rt.Channels[i]
+			r := functions[i]
 			err := r(rt, c)
 			if err != nil {
 				rt.Log.Panic(err)
 			}
-		})(i, rt, &wg);
+			wg.Done()
+		})(i, rt, &wg)
 	}
+	go (func(rt *eoy.Runtime, wg *sync.WaitGroup, done chan bool) {
+		wg.Add(1)
+		err := eoy.Drive(rt, done)
+		if err != nil {
+			rt.Log.Panic(err)
+		}
+		wg.Done()
+	})(rt, &wg, done)
+	d, _ := time.ParseDuration(sleepDuration)
+	time.Sleep(d)
+	wg.Wait()
+	rt.Log.Printf("All tasks are done.  Time to build the output.")
 }

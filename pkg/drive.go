@@ -1,14 +1,13 @@
 package eoy
 
 import (
-	"fmt"
-
 	goengage "github.com/salsalabs/goengage/pkg"
 )
 
 //Drive reads fundraising activities from Engage and hands them off to
 //channels for downstream processing.
 func Drive(rt *Runtime, done chan bool) (err error) {
+	rt.Log.Println("Drive: start")
 
 	payload := goengage.ActivityRequestPayload{
 		Type:         goengage.FundraiseType,
@@ -48,18 +47,20 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		// 	"OneTime")
 
 		for _, r := range resp.Payload.Activities {
-			for _, c := range rt.Channels {
+			for i, c := range rt.Channels {
 				c <- r
-				fmt.Printf("Drive: %-36s %04d-%02d-%02d %-10s %-10s %7.2f %7.2f %7.2f\n",
-					r.ActivityID,
-					r.Year,
-					r.Month,
-					r.Day,
-					r.ActivityType,
-					r.DonationType,
-					r.TotalReceivedAmount,
-					r.RecurringAmount,
-					r.OneTimeAmount)
+				rt.Log.Printf("Drive: chan %d, %v\n", i, r.ActivityID)
+
+				// fmt.Printf("Drive: %-36s %04d-%02d-%02d %-10s %-10s %7.2f %7.2f %7.2f\n",
+				// 	r.ActivityID,
+				// 	r.Year,
+				// 	r.Month,
+				// 	r.Day,
+				// 	r.ActivityType,
+				// 	r.DonationType,
+				// 	r.TotalReceivedAmount,
+				// 	r.RecurringAmount,
+				// 	r.OneTimeAmount)
 			}
 		}
 	}
@@ -67,5 +68,6 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		close(c)
 	}
 	done <- true
+	rt.Log.Println("Drive: end")
 	return nil
 }
