@@ -17,6 +17,7 @@ func Transaction(rt *Runtime, c chan goengage.Fundraise) (err error) {
 
 		if len(r.Transactions) != 0 {
 			for _, c := range r.Transactions {
+				c.ActivityID = r.ActivityID
 				rt.DB.Create(&c)
 			}
 		}
