@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/jinzhu/gorm"
 	goengage "github.com/salsalabs/goengage/pkg"
 )
@@ -46,10 +47,11 @@ type Month struct {
 
 //Runtime contains the variables that we need to run this application.
 type Runtime struct {
-	Env      *goengage.Environment
-	DB       *gorm.DB
-	Log      *log.Logger
-	Channels []chan goengage.Fundraise
+	Env         *goengage.Environment
+	DB          *gorm.DB
+	Log         *log.Logger
+	Channels    []chan goengage.Fundraise
+	Spreadsheet *excelize.File
 }
 
 //Year is used to provide a primary key for storing stats by year.
@@ -66,10 +68,11 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	}
 
 	rt := Runtime{
-		Env:      e,
-		DB:       db,
-		Log:      log.New(w, "EOY: ", log.LstdFlags),
-		Channels: channels,
+		Env:         e,
+		DB:          db,
+		Log:         log.New(w, "EOY: ", log.LstdFlags),
+		Channels:    channels,
+		Spreadsheet: excelize.NewFile(),
 	}
 
 	return &rt
