@@ -22,6 +22,7 @@ logins/*
 *.bash
 *.txt
 *.json
+*.log
 
 # Apple files
 .DS_Store
@@ -30,6 +31,3 @@ logins/*
 # Databases
 *.db
 *.sqlite3
-
-# Logs
-*.log
