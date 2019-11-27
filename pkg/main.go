@@ -9,29 +9,11 @@ import (
 	goengage "github.com/salsalabs/goengage/pkg"
 )
 
-//Runtime contains the variables that we need to run this application.
-type Runtime struct {
-	Env      *goengage.Environment
-	DB       *gorm.DB
-	Log      *log.Logger
-	Channels []chan goengage.Fundraise
-}
-
-//NewRuntime creates a runtime object and initializes the rt.
-func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.Fundraise) *Runtime {
-	w, err := os.Create("eoy.log")
-	if err != nil {
-		log.Panic(err)
-	}
-
-	rt := Runtime{
-		Env:      e,
-		DB:       db,
-		Log:      log.New(w, "EOY: ", log.LstdFlags),
-		Channels: channels,
-	}
-
-	return &rt
+//ActivityForm contains a basic set of values for an activity page.
+type ActivityForm struct {
+	ID          string
+	Name        string
+	CreatedDate *time.Time
 }
 
 //GivingStat is used to store the usual statistics about a set of donations.
@@ -53,12 +35,6 @@ type GivingStat struct {
 	CreatedDate     *time.Time
 }
 
-//Year is used to provide a primary key for storing stats by year.
-type Year struct {
-	ID          int
-	CreatedDate *time.Time
-}
-
 //Month is used to provide a primary key for storing stats by month.
 type Month struct {
 	//ID is YYYY-MM
@@ -66,4 +42,35 @@ type Month struct {
 	Year        int
 	Month       int
 	CreatedDate *time.Time
+}
+
+//Runtime contains the variables that we need to run this application.
+type Runtime struct {
+	Env      *goengage.Environment
+	DB       *gorm.DB
+	Log      *log.Logger
+	Channels []chan goengage.Fundraise
+}
+
+//Year is used to provide a primary key for storing stats by year.
+type Year struct {
+	ID          int
+	CreatedDate *time.Time
+}
+
+//NewRuntime creates a runtime object and initializes the rt.
+func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.Fundraise) *Runtime {
+	w, err := os.Create("eoy.log")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	rt := Runtime{
+		Env:      e,
+		DB:       db,
+		Log:      log.New(w, "EOY: ", log.LstdFlags),
+		Channels: channels,
+	}
+
+	return &rt
 }

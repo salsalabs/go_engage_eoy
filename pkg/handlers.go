@@ -9,13 +9,6 @@ import (
 	goengage "github.com/salsalabs/goengage/pkg"
 )
 
-//ActivityForm contains a basic set of values for an activity page.
-type ActivityForm struct {
-	ID          string
-	Name        string
-	CreatedDate *time.Time
-}
-
 //Activity reads a channel of activities to retrieve ActivityIDs.  Those
 //are used to populate the Activity table in the database.
 func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
