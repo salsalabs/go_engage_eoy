@@ -114,6 +114,18 @@ This application accepts an Engage API Token, then provides the usual end-of-yea
 -   Smallest donation and date
 -   Average donation
 
+## Show me the revenue by activity page.
+
+-   Activity page name
+-   Activity page start date
+-   Activity page end date
+-   Number of tickets
+-   Total ticket revenue (outside of
+-   Number of purchases
+-   Total purchase revenue
+-   Number of donations
+-   Total of donations
+
 ## Show me the projected revenue from recurring donations
 
 -   First Name
@@ -126,18 +138,6 @@ This application accepts an Engage API Token, then provides the usual end-of-yea
 -   Recurring amount.
 -   Number of months until the lesser of end date or credit card expiration.
 -   Total projected revenue (recurring amount x number of months)
-
-## Show me the revenue by activity page.
-
--   Activity page name
--   Activity page start date
--   Activity page end date
--   Number of tickets
--   Total ticket revenue (outside of
--   Number of purchases
--   Total purchase revenue
--   Number of donations
--   Total of donations
 
 # Installation
 
