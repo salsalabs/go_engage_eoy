@@ -234,7 +234,7 @@ Be patient.
 The last step is to build the executable. Stay in the `goengage-eoy` directory.
 Type this
 
-```go install```
+```go build -o $HOME/go/bin/goengage-eoy cmd/main.go```
 
 That will create a new file named `goengage-eoy` (or `goengage-eoy.exe`) in the `go/bin`
 directory in your home dir.
