@@ -17,7 +17,7 @@ type Runtime struct {
 	Channels []chan goengage.Fundraise
 }
 
-//NewRuntime creates a runtime object and initializes the log.
+//NewRuntime creates a runtime object and initializes the rt.
 func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.Fundraise) *Runtime {
 	w, err := os.Create("eoy.log")
 	if err != nil {
@@ -51,4 +51,19 @@ type GivingStat struct {
 	Largest         float64
 	Smallest        float64
 	CreatedDate     *time.Time
+}
+
+//Year is used to provide a primary key for storing stats by year.
+type Year struct {
+	ID          int
+	CreatedDate *time.Time
+}
+
+//Month is used to provide a primary key for storing stats by month.
+type Month struct {
+	//ID is YYYY-MM
+	ID          string
+	Year        int
+	Month       int
+	CreatedDate *time.Time
 }

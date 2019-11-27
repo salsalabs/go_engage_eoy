@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -41,19 +40,22 @@ func main() {
 	db.AutoMigrate(&goengage.CustomFieldValue{})
 	db.AutoMigrate(&eoy.ActivityForm{})
 	db.AutoMigrate(&eoy.GivingStat{})
+	db.AutoMigrate(&eoy.Year{})
+	db.AutoMigrate(&eoy.Month{})
 
-	//Channel used by the downstream processors...
-	var channels []chan goengage.Fundraise
-	for i := 0; i < 5; i++ {
-		c := make(chan goengage.Fundraise)
-		channels = append(channels, c)
-	}
 	functions := []actor{
 		eoy.Activity,
 		eoy.Form,
 		eoy.Stats,
 		eoy.Supporter,
 		eoy.Transaction,
+		eoy.Dates,
+	}
+	//Channel used by the downstream processors...
+	var channels []chan goengage.Fundraise
+	for i := 0; i < len(functions); i++ {
+		c := make(chan goengage.Fundraise, 100)
+		channels = append(channels, c)
 	}
 
 	done := make(chan bool)
@@ -66,7 +68,7 @@ func main() {
 			r := functions[i]
 			err := r(rt, c)
 			if err != nil {
-				log.Panic(err)
+				rt.Log.Panic(err)
 			}
 			wg.Done()
 		})(i, rt, &wg)
@@ -75,12 +77,15 @@ func main() {
 		wg.Add(1)
 		err := eoy.Drive(rt, done)
 		if err != nil {
-			log.Panic(err)
+			rt.Log.Panic(err)
 		}
 		wg.Done()
 	})(rt, &wg, done)
-	d, _ := time.ParseDuration(sleepDuration)
-	time.Sleep(d)
+	<-done
+	//d, _ := time.ParseDuration(sleepDuration)
+	//time.Sleep(d)
+	log.Printf("Waiting for tasks to complete.")
 	wg.Wait()
-	log.Printf("All tasks are done.  Time to build the output.")
+	rt.Log.Printf("All tasks are complete.  Time to build the output.")
+	log.Printf("All tasks are complete.  Time to build the output.")
 }
