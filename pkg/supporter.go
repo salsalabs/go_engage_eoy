@@ -1,7 +1,6 @@
 package eoy
 
 import (
-	"log"
 	"time"
 
 	goengage "github.com/salsalabs/goengage/pkg"
@@ -10,18 +9,20 @@ import (
 //Supporter reads a channel of activities to retrieve supporterIDs.  Those
 //are used to populate the supporter table in the database.
 func Supporter(rt *Runtime, c chan goengage.Fundraise) (err error) {
-	log.Println("Supporter: start")
+	rt.Log.Println("Supporter: start")
 	for true {
 		r, ok := <-c
 		if !ok {
 			break
 		}
-		log.Printf("%v Supporter\n", r.ActivityID)
+		rt.Log.Printf("%v Supporter\n", r.ActivityID)
 
 		s := goengage.Supporter{
 			SupporterID: r.SupporterID,
 		}
-		rt.DB.Where("supporter_id = ?", r.SupporterID).First(&s)
+		rt.DB.FirstOrInit(&s, s)
+
+		// rt.DB.Where("supporter_id = ?", r.SupporterID).First(&s)
 		if s.CreatedDate == nil {
 			t, err := goengage.FetchSupporter(rt.Env, r.SupporterID)
 			if err != nil {
@@ -36,6 +37,6 @@ func Supporter(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			rt.DB.Create(&s)
 		}
 	}
-	log.Println("Supporter: end")
+	rt.Log.Println("Supporter: end")
 	return nil
 }

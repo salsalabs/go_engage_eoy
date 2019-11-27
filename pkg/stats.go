@@ -2,7 +2,6 @@ package eoy
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"time"
 
@@ -48,13 +47,13 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 //Stats reads a channel of Stats to retrieve ActivityIDs.  Those
 //are used to populate the Activity table in the database.
 func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
-	log.Println("Stats: start")
+	rt.Log.Println("Stats: start")
 	for true {
 		r, ok := <-c
 		if !ok {
 			break
 		}
-		log.Printf("%v Stats\n", r.ActivityID)
+		rt.Log.Printf("%v Stats\n", r.ActivityID)
 		update(rt, r, r.ActivityID)
 		update(rt, r, r.SupporterID)
 		update(rt, r, r.ActivityFormID)
@@ -63,7 +62,7 @@ func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		t = fmt.Sprintf("%d-%02d", r.Year, r.Month)
 		update(rt, r, t)
 	}
-	log.Println("Stats: end")
+	rt.Log.Println("Stats: end")
 
 	return nil
 }
