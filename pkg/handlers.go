@@ -25,10 +25,10 @@ func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
 	return nil
 }
 
-//Dates reads a channel of activities to retrieve DatesIDs.  Those
-//are used to populate the Dates table in the database.
-func Dates(rt *Runtime, c chan goengage.Fundraise) (err error) {
-	rt.Log.Println("Dates: start")
+//Date reads a channel of activities. Thoseare used to populate
+//the Dates table in the database.
+func Date(rt *Runtime, c chan goengage.Fundraise) (err error) {
+	rt.Log.Println("Date: start")
 	for true {
 		r, ok := <-c
 		if !ok {
@@ -59,7 +59,7 @@ func Dates(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			rt.DB.Create(&m)
 		}
 	}
-	rt.Log.Println("Dates: start")
+	rt.Log.Println("Date: end")
 	return nil
 }
 

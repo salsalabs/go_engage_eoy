@@ -49,7 +49,7 @@ func main() {
 		eoy.Stats,
 		eoy.Supporter,
 		eoy.Transaction,
-		eoy.Dates,
+		eoy.Date,
 	}
 	//Channel used by the downstream processors...
 	var channels []chan goengage.Fundraise
