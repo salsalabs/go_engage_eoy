@@ -30,6 +30,8 @@ func (rt *Runtime) Harvest() (err error) {
 // ThisYear selects data for ThisYear, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func ThisYear(rt *Runtime) (err error) {
+	name := "ThisYear"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
@@ -37,6 +39,8 @@ func ThisYear(rt *Runtime) (err error) {
 // Months selects data for Months, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func Months(rt *Runtime) (err error) {
+	name := "Months"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
@@ -44,6 +48,8 @@ func Months(rt *Runtime) (err error) {
 // YearOverYear selects data for YearOverYear, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func YearOverYear(rt *Runtime) (err error) {
+	name := "YearOverYear"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
@@ -51,6 +57,8 @@ func YearOverYear(rt *Runtime) (err error) {
 // MonthOverMonth selects data for MonthOverMonth, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func MonthOverMonth(rt *Runtime) (err error) {
+	name := "MonthOverMonth"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
@@ -58,6 +66,8 @@ func MonthOverMonth(rt *Runtime) (err error) {
 // AllDonors selects data for AllDonors, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func AllDonors(rt *Runtime) (err error) {
+	name := "AllDonors"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
@@ -65,6 +75,8 @@ func AllDonors(rt *Runtime) (err error) {
 // TopDonors selects data for TopDonors, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func TopDonors(rt *Runtime) (err error) {
+	name := "TopDonors"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
@@ -72,6 +84,8 @@ func TopDonors(rt *Runtime) (err error) {
 // ActivityPages selects data for ActivityPages, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func ActivityPages(rt *Runtime) (err error) {
+	name := "ActivityPages"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
@@ -79,6 +93,8 @@ func ActivityPages(rt *Runtime) (err error) {
 // ProjectedRevenue selects data for ProjectedRevenue, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func ProjectedRevenue(rt *Runtime) (err error) {
+	name := "ProjectedRevenue"
+	index := rt.Spreadsheet.NewSheet(name)
 
 	return err
 }
