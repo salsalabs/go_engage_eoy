@@ -49,9 +49,14 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		// 	"OneTime")
 
 		for _, r := range resp.Payload.Activities {
-			for i, c := range rt.Channels {
+			log.Printf("%v Drive\n", r.ActivityID)
+			// Need this here so that the stats will work.
+			r.Year = r.ActivityDate.Year()
+			r.Month = int(r.ActivityDate.Month())
+			r.Day = r.ActivityDate.Day()
+
+			for _, c := range rt.Channels {
 				c <- r
-				log.Printf("%v Drive: chan %d\n", r.ActivityID, i)
 
 				// fmt.Printf("Drive: %-36s %04d-%02d-%02d %-10s %-10s %7.2f %7.2f %7.2f\n",
 				// 	r.ActivityID,

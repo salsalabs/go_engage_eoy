@@ -16,10 +16,6 @@ func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			break
 		}
 		log.Printf("%v Activity\n", r.ActivityID)
-
-		r.Year = r.ActivityDate.Year()
-		r.Month = int(r.ActivityDate.Month())
-		r.Day = r.ActivityDate.Day()
 		rt.DB.Create(&r)
 	}
 	log.Println("Activity: end")
