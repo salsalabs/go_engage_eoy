@@ -1,6 +1,7 @@
 package eoy
 
 import (
+	"log"
 	"time"
 
 	goengage "github.com/salsalabs/goengage/pkg"
@@ -16,14 +17,14 @@ type ActivityForm struct {
 //Form reads a channel of activities to retrieve ActivityIDs.  Those
 //are used to populate the Activity table in the database.
 func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
-	rt.Log.Println("Form: start")
+	log.Println("Form: start")
 	for true {
 		r, ok := <-c
 		if !ok {
 			break
 		}
 		s := ActivityForm{}
-		rt.Log.Printf("Form: %v\n", r.ActivityID)
+		log.Printf("%v Form\n", r.ActivityID)
 		rt.DB.Where("key = ?", r.ActivityFormID).First(&s)
 		if s.CreatedDate == nil {
 			s.Key = r.ActivityFormID
@@ -33,6 +34,6 @@ func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			rt.DB.Create(&s)
 		}
 	}
-	rt.Log.Println("Form: end")
+	log.Println("Form: end")
 	return nil
 }

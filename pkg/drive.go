@@ -1,13 +1,15 @@
 package eoy
 
 import (
+	"log"
+
 	goengage "github.com/salsalabs/goengage/pkg"
 )
 
 //Drive reads fundraising activities from Engage and hands them off to
 //channels for downstream processing.
 func Drive(rt *Runtime, done chan bool) (err error) {
-	rt.Log.Println("Drive: start")
+	log.Println("Drive: start")
 
 	payload := goengage.ActivityRequestPayload{
 		Type:         goengage.FundraiseType,
@@ -49,7 +51,7 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		for _, r := range resp.Payload.Activities {
 			for i, c := range rt.Channels {
 				c <- r
-				rt.Log.Printf("Drive: chan %d, %v\n", i, r.ActivityID)
+				log.Printf("%v Drive: chan %d\n", r.ActivityID, i)
 
 				// fmt.Printf("Drive: %-36s %04d-%02d-%02d %-10s %-10s %7.2f %7.2f %7.2f\n",
 				// 	r.ActivityID,
@@ -68,6 +70,6 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		close(c)
 	}
 	done <- true
-	rt.Log.Println("Drive: end")
+	log.Println("Drive: end")
 	return nil
 }

@@ -66,7 +66,7 @@ func main() {
 			r := functions[i]
 			err := r(rt, c)
 			if err != nil {
-				rt.Log.Panic(err)
+				log.Panic(err)
 			}
 			wg.Done()
 		})(i, rt, &wg)
@@ -75,12 +75,12 @@ func main() {
 		wg.Add(1)
 		err := eoy.Drive(rt, done)
 		if err != nil {
-			rt.Log.Panic(err)
+			log.Panic(err)
 		}
 		wg.Done()
 	})(rt, &wg, done)
 	d, _ := time.ParseDuration(sleepDuration)
 	time.Sleep(d)
 	wg.Wait()
-	rt.Log.Printf("All tasks are done.  Time to build the output.")
+	log.Printf("All tasks are done.  Time to build the output.")
 }
