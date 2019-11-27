@@ -9,7 +9,7 @@ import (
 
 //ActivityForm contains a basic set of values for an activity page.
 type ActivityForm struct {
-	Key         string
+	ID          string
 	Name        string
 	CreatedDate *time.Time
 }
@@ -25,9 +25,9 @@ func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		}
 		s := ActivityForm{}
 		log.Printf("%v Form\n", r.ActivityID)
-		rt.DB.Where("key = ?", r.ActivityFormID).First(&s)
+		rt.DB.Where("id = ?", r.ActivityFormID).First(&s)
 		if s.CreatedDate == nil {
-			s.Key = r.ActivityFormID
+			s.ID = r.ActivityFormID
 			s.Name = r.ActivityFormName
 			t := time.Now()
 			s.CreatedDate = &t
