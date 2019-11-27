@@ -30,3 +30,6 @@ logins/*
 # Databases
 *.db
 *.sqlite3
+
+# Logs
+*.log
