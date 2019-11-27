@@ -2,6 +2,7 @@ package eoy
 
 import (
 	"log"
+	"math"
 	"time"
 
 	goengage "github.com/salsalabs/goengage/pkg"
@@ -25,6 +26,29 @@ func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			t := time.Now()
 			g.CreatedDate = &t
 			rt.DB.Create(&g)
+		}
+		for _, t := range r.Transactions {
+			g.AllCount++
+			g.AllAmount = g.AllAmount + t.Amount
+			switch r.DonationType {
+			case goengage.OneTime:
+				g.OneTimeCount++
+				g.OneTimeAmount += t.Amount
+			case goengage.Recurring:
+				g.RecurringCount++
+				g.RecurringAmount += t.Amount
+			}
+			switch t.Type {
+			case goengage.Refund:
+				g.RefundsCount++
+				g.RefundsAmount += t.Amount
+			}
+			//OfflineCount    int32
+			//OfflineAmount   float64
+			g.Largest = math.Max(g.Largest, t.Amount)
+			g.Smallest = math.Min(g.Smallest, t.Amount)
+
+			rt.DB.Model(&g).Updates(&g)
 		}
 	}
 	log.Println("Stats: end")
