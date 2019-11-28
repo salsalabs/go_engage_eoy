@@ -2,6 +2,7 @@ package eoy
 
 import (
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -76,43 +77,21 @@ func ThisYear(rt *Runtime) (err error) {
 		fmt.Sprintf("Performance summary for %v", y),
 	}
 	rt.Spreadsheet.InsertRow(name, 1)
-	rt.Spreadsheet.SetSheetRow(name, "A1", header)
+	err = rt.Spreadsheet.SetSheetRow(name, "A1", &header)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	h := strings.Split(statsHeaders, "\n")
 	g := a[0].GivingStat
-	for i, t := range h {
+	for i := range h {
+		c := cellContent(rt, g, i, "BCDEFGHIJKLMNOPQ")
 		rt.Spreadsheet.InsertRow(name, i+2)
 		axis := fmt.Sprintf("A%d", i+2)
-		rt.Spreadsheet.SetCellValue(name, axis, t)
-		var v interface{}
-		switch i {
-		case 0:
-			v = g.AllCount
-		case 1:
-			v = g.AllAmount
-		case 2:
-			v = g.OneTimeCount
-		case 3:
-			v = g.OneTimeAmount
-		case 4:
-			v = g.RecurringCount
-		case 5:
-			v = g.RecurringAmount
-		case 6:
-			v = g.OfflineCount
-		case 7:
-			v = g.OfflineAmount
-		case 8:
-			v = g.RefundsCount
-		case 9:
-			v = g.RefundsAmount
-		case 10:
-			v = g.Largest
-		case 11:
-			v = g.Smallest
-		}
+		rt.Spreadsheet.SetCellValue(name, axis, c.Header)
 		axis = fmt.Sprintf("B%d", i+2)
-		rt.Spreadsheet.SetCellValue(name, axis, v)
+		rt.Spreadsheet.SetCellValue(name, axis, c.Value)
+		rt.Spreadsheet.SetCellStyle(name, axis, axis, c.Style)
 	}
 	return err
 }
@@ -126,6 +105,70 @@ func Months(rt *Runtime) (err error) {
 	return err
 }
 
+//content describes the content of a cell.
+type content struct {
+	Value  interface{}
+	Style  int
+	Header string
+	Column string
+}
+
+//cellContent returns a content for one of the stats values.  The
+//index value is for the list of headers.
+func cellContent(rt *Runtime, g GivingStat, i int, cols string) content {
+	hc := strings.Split(statsHeaders, "\n")
+	countStyle, _ := rt.Spreadsheet.NewStyle(`{"number_format": 3}`)
+	valueStyle, _ := rt.Spreadsheet.NewStyle(`{"number_format": 3}`)
+	var v interface{}
+	var style int
+	switch i {
+	case 0:
+		v = g.AllCount
+		style = countStyle
+	case 1:
+		v = g.AllAmount
+		style = valueStyle
+	case 2:
+		v = g.OneTimeCount
+		style = countStyle
+	case 3:
+		v = g.OneTimeAmount
+		style = valueStyle
+	case 4:
+		v = g.RecurringCount
+		style = countStyle
+	case 5:
+		v = g.RecurringAmount
+		style = valueStyle
+	case 6:
+		v = g.OfflineCount
+		style = countStyle
+	case 7:
+		v = g.OfflineAmount
+		style = valueStyle
+	case 8:
+		v = g.RefundsCount
+		style = countStyle
+	case 9:
+		v = g.RefundsAmount
+		style = valueStyle
+	case 10:
+		v = g.Largest
+		style = valueStyle
+	case 11:
+		v = g.Smallest
+		style = valueStyle
+	}
+	col := string(cols[i])
+	c := content{
+		Value:  v,
+		Style:  style,
+		Header: hc[i],
+		Column: col,
+	}
+	return c
+}
+
 // YearOverYear selects data for YearOverYear, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func YearOverYear(rt *Runtime) (err error) {
@@ -133,61 +176,34 @@ func YearOverYear(rt *Runtime) (err error) {
 	_ = rt.Spreadsheet.NewSheet(name)
 	var a []yearResult
 	rt.DB.Table("years").Select("years.id, giving_stats.*").Joins("left join giving_stats on giving_stats.id = years.id").Scan(&a)
-	header := []string{
-		"Year over year performance",
-	}
+	h := "Year over year performance"
 	//Sheet header
 	rt.Spreadsheet.InsertRow(name, 1)
-	rt.Spreadsheet.SetSheetRow(name, "A1", header)
+	rt.Spreadsheet.SetCellValue(name, "A1", h)
 	//Column headers
-	h := strings.Split(statsHeaders, "\n")
-	header = []string{}
+	hc := strings.Split(statsHeaders, "\n")
+	header := []string{}
 	header = append(header, "Year")
-	for _, t := range h {
+	for _, t := range hc {
 		header = append(header, t)
 	}
 	rt.Spreadsheet.InsertRow(name, 2)
-	rt.Spreadsheet.SetSheetRow(name, "A2", header)
-
+	err = rt.Spreadsheet.SetSheetRow(name, "A2", &header)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for rowID, r := range a {
-		w := []string{
-			count(int32(r.ID)),
-		}
-		g := r.GivingStat
-		for i := range h {
-			var v string
-			switch i {
-			case 0:
-				v = count(g.AllCount)
-			case 1:
-				v = amount(g.AllAmount)
-			case 2:
-				v = count(g.OneTimeCount)
-			case 3:
-				v = amount(g.OneTimeAmount)
-			case 4:
-				v = count(g.RecurringCount)
-			case 5:
-				v = amount(g.RecurringAmount)
-			case 6:
-				v = count(g.OfflineCount)
-			case 7:
-				v = amount(g.OfflineAmount)
-			case 8:
-				v = count(g.RefundsCount)
-			case 9:
-				v = amount(g.RefundsAmount)
-			case 10:
-				v = amount(g.Largest)
-			case 11:
-				v = amount(g.Smallest)
-			}
-			w = append(w, v)
-		}
-		axis := fmt.Sprintf("A%d", rowID+3)
-		fmt.Printf("name:%v, axis, %v, values: %v\n", name, axis, w)
 		rt.Spreadsheet.InsertRow(name, rowID+3)
-		rt.Spreadsheet.SetSheetRow(name, axis, &w)
+		axis := fmt.Sprintf("A%d", rowID+3)
+		rt.Spreadsheet.SetCellValue(name, axis, r.ID)
+		g := r.GivingStat
+		cols := "BCDEFGHIJKLMNOPQ"
+		for i := range hc {
+			c := cellContent(rt, g, i, cols)
+			axis = fmt.Sprintf("%v%d", c.Column, rowID+3)
+			rt.Spreadsheet.SetCellValue(name, axis, c.Value)
+			rt.Spreadsheet.SetCellStyle(name, axis, axis, c.Style)
+		}
 	}
 	return err
 }
