@@ -81,38 +81,38 @@ func ThisYear(rt *Runtime) (err error) {
 	h := strings.Split(statsHeaders, "\n")
 	g := a[0].GivingStat
 	for i, t := range h {
-		r := []string{t}
-		var v string
+		rt.Spreadsheet.InsertRow(name, i+2)
+		axis := fmt.Sprintf("A%d", i+2)
+		rt.Spreadsheet.SetCellValue(name, axis, t)
+		var v interface{}
 		switch i {
 		case 0:
-			v = count(g.AllCount)
+			v = g.AllCount
 		case 1:
-			v = amount(g.AllAmount)
+			v = g.AllAmount
 		case 2:
-			v = count(g.OneTimeCount)
+			v = g.OneTimeCount
 		case 3:
-			v = amount(g.OneTimeAmount)
+			v = g.OneTimeAmount
 		case 4:
-			v = count(g.RecurringCount)
+			v = g.RecurringCount
 		case 5:
-			v = amount(g.RecurringAmount)
+			v = g.RecurringAmount
 		case 6:
-			v = count(g.OfflineCount)
+			v = g.OfflineCount
 		case 7:
-			v = amount(g.OfflineAmount)
+			v = g.OfflineAmount
 		case 8:
-			v = count(g.RefundsCount)
+			v = g.RefundsCount
 		case 9:
-			v = amount(g.RefundsAmount)
+			v = g.RefundsAmount
 		case 10:
-			v = amount(g.Largest)
+			v = g.Largest
 		case 11:
-			v = amount(g.Smallest)
+			v = g.Smallest
 		}
-		r = append(r, v)
-		axis := fmt.Sprintf("A%d", i+2)
-		rt.Spreadsheet.InsertRow(name, i+2)
-		rt.Spreadsheet.SetSheetRow(name, axis, &r)
+		axis = fmt.Sprintf("B%d", i+2)
+		rt.Spreadsheet.SetCellValue(name, axis, v)
 	}
 	return err
 }
