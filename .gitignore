@@ -23,6 +23,7 @@ logins/*
 *.txt
 *.json
 *.log
+*.xlsx
 
 # Apple files
 .DS_Store
