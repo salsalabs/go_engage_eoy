@@ -6,7 +6,7 @@ type harvester func(rt *Runtime) (err error)
 //Harvest retrieves data from the database in various permutations of slicing
 //and dicing, then stores them into a spreadsheet.  The spreadsheet is written
 //to disk when done.
-func (rt *Runtime) Harvest() (err error) {
+func (rt *Runtime) Harvest(fn string) (err error) {
 	functions := []harvester{
 		ThisYear,
 		Months,
@@ -24,6 +24,7 @@ func (rt *Runtime) Harvest() (err error) {
 			return err
 		}
 	}
+	err = rt.StoreSpreadsheet(fn)
 	return err
 }
 
@@ -96,5 +97,11 @@ func ProjectedRevenue(rt *Runtime) (err error) {
 	name := "ProjectedRevenue"
 	index := rt.Spreadsheet.NewSheet(name)
 
+	return err
+}
+
+//StoreSpreadsheet saves the spreadsheet to disk.
+func (rt *Runtime) StoreSpreadsheet(fn string) (err error) {
+	err = rt.Spreadsheet.SaveAs(fn)
 	return err
 }

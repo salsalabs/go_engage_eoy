@@ -46,7 +46,7 @@ func main() {
 	var channels []chan goengage.Fundraise
 	rt := eoy.NewRuntime(e, db, channels)
 	fmt.Println("Harvest start")
-	err = rt.Harvest()
+	err = rt.Harvest("eoy_test.xlsx")
 	if err != nil {
 		panic(err)
 	}
