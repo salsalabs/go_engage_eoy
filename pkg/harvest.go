@@ -111,11 +111,9 @@ func ThisYear(rt *Runtime) (err error) {
 		}
 		r = append(r, v)
 		axis := fmt.Sprintf("A%d", i+2)
-		fmt.Printf("name:%v, axis, %v, values: %v\n", name, axis, r)
 		rt.Spreadsheet.InsertRow(name, i+2)
 		rt.Spreadsheet.SetSheetRow(name, axis, &r)
 	}
-
 	return err
 }
 
@@ -133,7 +131,64 @@ func Months(rt *Runtime) (err error) {
 func YearOverYear(rt *Runtime) (err error) {
 	name := "Year-over-year"
 	_ = rt.Spreadsheet.NewSheet(name)
+	var a []yearResult
+	rt.DB.Table("years").Select("years.id, giving_stats.*").Joins("left join giving_stats on giving_stats.id = years.id").Scan(&a)
+	header := []string{
+		"Year over year performance",
+	}
+	//Sheet header
+	rt.Spreadsheet.InsertRow(name, 1)
+	rt.Spreadsheet.SetSheetRow(name, "A1", header)
+	//Column headers
+	h := strings.Split(statsHeaders, "\n")
+	header = []string{}
+	header = append(header, "Year")
+	for _, t := range h {
+		header = append(header, t)
+	}
+	rt.Spreadsheet.InsertRow(name, 2)
+	rt.Spreadsheet.SetSheetRow(name, "A2", header)
 
+	for rowID, r := range a {
+		w := []string{
+			count(int32(r.ID)),
+		}
+		g := r.GivingStat
+		for i := range h {
+			var v string
+			switch i {
+			case 0:
+				v = count(g.AllCount)
+			case 1:
+				v = amount(g.AllAmount)
+			case 2:
+				v = count(g.OneTimeCount)
+			case 3:
+				v = amount(g.OneTimeAmount)
+			case 4:
+				v = count(g.RecurringCount)
+			case 5:
+				v = amount(g.RecurringAmount)
+			case 6:
+				v = count(g.OfflineCount)
+			case 7:
+				v = amount(g.OfflineAmount)
+			case 8:
+				v = count(g.RefundsCount)
+			case 9:
+				v = amount(g.RefundsAmount)
+			case 10:
+				v = amount(g.Largest)
+			case 11:
+				v = amount(g.Smallest)
+			}
+			w = append(w, v)
+		}
+		axis := fmt.Sprintf("A%d", rowID+3)
+		fmt.Printf("name:%v, axis, %v, values: %v\n", name, axis, w)
+		rt.Spreadsheet.InsertRow(name, rowID+3)
+		rt.Spreadsheet.SetSheetRow(name, axis, &w)
+	}
 	return err
 }
 
