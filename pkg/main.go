@@ -66,13 +66,15 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	if err != nil {
 		log.Panic(err)
 	}
+	s := excelize.NewFile()
+	s.DeleteSheet("Sheet1")
 
 	rt := Runtime{
 		Env:         e,
 		DB:          db,
 		Log:         log.New(w, "EOY: ", log.LstdFlags),
 		Channels:    channels,
-		Spreadsheet: excelize.NewFile(),
+		Spreadsheet: s,
 	}
 
 	return &rt

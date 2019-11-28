@@ -1,12 +1,41 @@
 package eoy
 
+import (
+	"fmt"
+	"strings"
+)
+
+//statsHeaders lists the stats fields.  Split by a newline to get a list.
+const statsHeaders = `All Count
+All Amount
+OneTime Count
+OneTime Amount
+Recurring Count
+Recurring Amount
+Offline Count
+Offline Amount
+Refunds Count
+Refunds Amount
+Largest
+Smallest`
+
 //harvester declares functions that process data.
 type harvester func(rt *Runtime) (err error)
 
-//thisyearresult holds a year and a giving_stats record.
-type thisyearresult struct {
-	Year int
+//yearResult holds a year and a giving_stats record.
+type yearResult struct {
+	ID int
 	GivingStat
+}
+
+//count converts an int to a string.
+func count(v int32) string {
+	return fmt.Sprintf("%d", v)
+}
+
+//amount converts a float to a string.
+func amount(v float64) string {
+	return fmt.Sprintf("%.2f", v)
 }
 
 //Harvest retrieves data from the database in various permutations of slicing
@@ -39,6 +68,53 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 func ThisYear(rt *Runtime) (err error) {
 	name := "This year"
 	_ = rt.Spreadsheet.NewSheet(name)
+
+	var a []yearResult
+	rt.DB.Table("years").Select("max(years.id), giving_stats.*").Joins("left join giving_stats on giving_stats.id = years.id").Scan(&a)
+	y := a[0].ID
+	header := []string{
+		fmt.Sprintf("Performance summary for %v", y),
+	}
+	rt.Spreadsheet.InsertRow(name, 1)
+	rt.Spreadsheet.SetSheetRow(name, "A1", header)
+
+	h := strings.Split(statsHeaders, "\n")
+	g := a[0].GivingStat
+	for i, t := range h {
+		r := []string{t}
+		var v string
+		switch i {
+		case 0:
+			v = count(g.AllCount)
+		case 1:
+			v = amount(g.AllAmount)
+		case 2:
+			v = count(g.OneTimeCount)
+		case 3:
+			v = amount(g.OneTimeAmount)
+		case 4:
+			v = count(g.RecurringCount)
+		case 5:
+			v = amount(g.RecurringAmount)
+		case 6:
+			v = count(g.OfflineCount)
+		case 7:
+			v = amount(g.OfflineAmount)
+		case 8:
+			v = count(g.RefundsCount)
+		case 9:
+			v = amount(g.RefundsAmount)
+		case 10:
+			v = amount(g.Largest)
+		case 11:
+			v = amount(g.Smallest)
+		}
+		r = append(r, v)
+		axis := fmt.Sprintf("A%d", i+2)
+		fmt.Printf("name:%v, axis, %v, values: %v\n", name, axis, r)
+		rt.Spreadsheet.InsertRow(name, i+2)
+		rt.Spreadsheet.SetSheetRow(name, axis, &r)
+	}
 
 	return err
 }
@@ -100,7 +176,7 @@ func ActivityPages(rt *Runtime) (err error) {
 // ProjectedRevenue selects data for ProjectedRevenue, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func ProjectedRevenue(rt *Runtime) (err error) {
-	name := "ProjectedRevenue"
+	name := "Projected revenue"
 	_ = rt.Spreadsheet.NewSheet(name)
 
 	return err
