@@ -29,80 +29,12 @@ type yearResult struct {
 	GivingStat
 }
 
-//count converts an int to a string.
-func count(v int32) string {
-	return fmt.Sprintf("%d", v)
-}
-
-//amount converts a float to a string.
-func amount(v float64) string {
-	return fmt.Sprintf("%.2f", v)
-}
-
-//Harvest retrieves data from the database in various permutations of slicing
-//and dicing, then stores them into a spreadsheet.  The spreadsheet is written
-//to disk when done.
-func (rt *Runtime) Harvest(fn string) (err error) {
-	functions := []harvester{
-		ThisYear,
-		Months,
-		YearOverYear,
-		MonthOverMonth,
-		AllDonors,
-		TopDonors,
-		ActivityPages,
-		ProjectedRevenue,
-	}
-
-	for _, r := range functions {
-		err := r(rt)
-		if err != nil {
-			return err
-		}
-	}
-	err = rt.StoreSpreadsheet(fn)
-	return err
-}
-
-// ThisYear selects data for ThisYear, sorts it, tweaks it, then stores it into
-//the spreadsheet.
-func ThisYear(rt *Runtime) (err error) {
-	name := "This year"
-	_ = rt.Spreadsheet.NewSheet(name)
-
-	var a []yearResult
-	rt.DB.Table("years").Select("max(years.id), giving_stats.*").Joins("left join giving_stats on giving_stats.id = years.id").Scan(&a)
-	y := a[0].ID
-	header := []string{
-		fmt.Sprintf("Performance summary for %v", y),
-	}
-	rt.Spreadsheet.InsertRow(name, 1)
-	err = rt.Spreadsheet.SetSheetRow(name, "A1", &header)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	h := strings.Split(statsHeaders, "\n")
-	g := a[0].GivingStat
-	for i := range h {
-		c := cellContent(rt, g, i, "BCDEFGHIJKLMNOPQ")
-		rt.Spreadsheet.InsertRow(name, i+2)
-		axis := fmt.Sprintf("A%d", i+2)
-		rt.Spreadsheet.SetCellValue(name, axis, c.Header)
-		axis = fmt.Sprintf("B%d", i+2)
-		rt.Spreadsheet.SetCellValue(name, axis, c.Value)
-		rt.Spreadsheet.SetCellStyle(name, axis, axis, c.Style)
-	}
-	return err
-}
-
-// Months selects data for Months, sorts it, tweaks it, then stores it into
-//the spreadsheet.
-func Months(rt *Runtime) (err error) {
-	name := "Month this year"
-	_ = rt.Spreadsheet.NewSheet(name)
-
-	return err
+//month result holds a month and a giving_stats record.
+type monthResult struct {
+	ID    string
+	Year  int
+	Month int
+	GivingStat
 }
 
 //content describes the content of a cell.
@@ -169,17 +101,83 @@ func cellContent(rt *Runtime, g GivingStat, i int, cols string) content {
 	return c
 }
 
+//Harvest retrieves data from the database in various permutations of slicing
+//and dicing, then stores them into a spreadsheet.  The spreadsheet is written
+//to disk when done.
+func (rt *Runtime) Harvest(fn string) (err error) {
+	functions := []harvester{
+		ThisYear,
+		Months,
+		YearOverYear,
+		MonthOverMonth,
+		AllDonors,
+		TopDonors,
+		ActivityPages,
+		ProjectedRevenue,
+	}
+
+	for _, r := range functions {
+		err := r(rt)
+		if err != nil {
+			return err
+		}
+	}
+	err = rt.StoreSpreadsheet(fn)
+	return err
+}
+
+// ThisYear selects data for ThisYear, sorts it, tweaks it, then stores it into
+//the spreadsheet.
+func ThisYear(rt *Runtime) (err error) {
+	sheet := "This year"
+	_ = rt.Spreadsheet.NewSheet(sheet)
+
+	var a []yearResult
+	rt.DB.Table("years").Select("max(years.id), giving_stats.*").Joins("left join giving_stats on giving_stats.id = years.id").Scan(&a)
+	y := a[0].ID
+	header := []string{
+		fmt.Sprintf("Performance summary for %v", y),
+	}
+	rt.Spreadsheet.InsertRow(sheet, 1)
+	err = rt.Spreadsheet.SetSheetRow(sheet, "A1", &header)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	h := strings.Split(statsHeaders, "\n")
+	g := a[0].GivingStat
+	for i := range h {
+		c := cellContent(rt, g, i, "BCDEFGHIJKLMNOPQ")
+		rt.Spreadsheet.InsertRow(sheet, i+2)
+		axis := fmt.Sprintf("A%d", i+2)
+		rt.Spreadsheet.SetCellValue(sheet, axis, c.Header)
+		axis = fmt.Sprintf("B%d", i+2)
+		rt.Spreadsheet.SetCellValue(sheet, axis, c.Value)
+		rt.Spreadsheet.SetCellStyle(sheet, axis, axis, c.Style)
+	}
+	return err
+}
+
+// Months selects data for Months, sorts it, tweaks it, then stores it into
+//the spreadsheet.
+func Months(rt *Runtime) (err error) {
+	sheet := "Month this year"
+	_ = rt.Spreadsheet.NewSheet(sheet)
+
+	return err
+}
+
 // YearOverYear selects data for YearOverYear, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func YearOverYear(rt *Runtime) (err error) {
-	name := "Year-over-year"
-	_ = rt.Spreadsheet.NewSheet(name)
+	sheet := "Year-over-year"
+	_ = rt.Spreadsheet.NewSheet(sheet)
 	var a []yearResult
-	rt.DB.Table("years").Select("years.id, giving_stats.*").Joins("left join giving_stats on giving_stats.id = years.id").Scan(&a)
+	rt.DB.Table("years").Select("years.id, giving_stats.*").Joins("left join giving_stats on giving_stats.id = years.id").Order("years.id desc").Scan(&a)
 	h := "Year over year performance"
 	//Sheet header
-	rt.Spreadsheet.InsertRow(name, 1)
-	rt.Spreadsheet.SetCellValue(name, "A1", h)
+	rt.Spreadsheet.InsertRow(sheet, 1)
+	rt.Spreadsheet.SetCellValue(sheet, "A1", h)
 	//Column headers
 	hc := strings.Split(statsHeaders, "\n")
 	header := []string{}
@@ -187,22 +185,22 @@ func YearOverYear(rt *Runtime) (err error) {
 	for _, t := range hc {
 		header = append(header, t)
 	}
-	rt.Spreadsheet.InsertRow(name, 2)
-	err = rt.Spreadsheet.SetSheetRow(name, "A2", &header)
+	rt.Spreadsheet.InsertRow(sheet, 2)
+	err = rt.Spreadsheet.SetSheetRow(sheet, "A2", &header)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for rowID, r := range a {
-		rt.Spreadsheet.InsertRow(name, rowID+3)
+		rt.Spreadsheet.InsertRow(sheet, rowID+3)
 		axis := fmt.Sprintf("A%d", rowID+3)
-		rt.Spreadsheet.SetCellValue(name, axis, r.ID)
+		rt.Spreadsheet.SetCellValue(sheet, axis, r.ID)
 		g := r.GivingStat
 		cols := "BCDEFGHIJKLMNOPQ"
 		for i := range hc {
 			c := cellContent(rt, g, i, cols)
 			axis = fmt.Sprintf("%v%d", c.Column, rowID+3)
-			rt.Spreadsheet.SetCellValue(name, axis, c.Value)
-			rt.Spreadsheet.SetCellStyle(name, axis, axis, c.Style)
+			rt.Spreadsheet.SetCellValue(sheet, axis, c.Value)
+			rt.Spreadsheet.SetCellStyle(sheet, axis, axis, c.Style)
 		}
 	}
 	return err
@@ -211,8 +209,44 @@ func YearOverYear(rt *Runtime) (err error) {
 // MonthOverMonth selects data for MonthOverMonth, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func MonthOverMonth(rt *Runtime) (err error) {
-	name := "Month-over-month"
-	_ = rt.Spreadsheet.NewSheet(name)
+	sheet := "Month-over-month"
+	_ = rt.Spreadsheet.NewSheet(sheet)
+
+	_ = rt.Spreadsheet.NewSheet(sheet)
+	var a []monthResult
+	rt.DB.Table("months").Select("month, year, giving_stats.*").Joins("left join giving_stats on giving_stats.id = months.id").Order("month,year").Scan(&a)
+	h := "Month over month performance"
+	//Sheet header
+	rt.Spreadsheet.InsertRow(sheet, 1)
+	rt.Spreadsheet.SetCellValue(sheet, "A1", h)
+	//Column headers
+	hc := strings.Split(statsHeaders, "\n")
+	header := []string{}
+	header = append(header, "Month")
+	header = append(header, "Year")
+	for _, t := range hc {
+		header = append(header, t)
+	}
+	rt.Spreadsheet.InsertRow(sheet, 2)
+	err = rt.Spreadsheet.SetSheetRow(sheet, "A2", &header)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for rowID, r := range a {
+		rt.Spreadsheet.InsertRow(sheet, rowID+3)
+		axis := fmt.Sprintf("A%d", rowID+3)
+		rt.Spreadsheet.SetCellValue(sheet, axis, r.Month)
+		axis = fmt.Sprintf("B%d", rowID+3)
+		rt.Spreadsheet.SetCellValue(sheet, axis, r.Year)
+		g := r.GivingStat
+		cols := "CDEFGHIJKLMNOPQR"
+		for i := range hc {
+			c := cellContent(rt, g, i, cols)
+			axis = fmt.Sprintf("%v%d", c.Column, rowID+3)
+			rt.Spreadsheet.SetCellValue(sheet, axis, c.Value)
+			rt.Spreadsheet.SetCellStyle(sheet, axis, axis, c.Style)
+		}
+	}
 
 	return err
 }
@@ -220,8 +254,8 @@ func MonthOverMonth(rt *Runtime) (err error) {
 // AllDonors selects data for AllDonors, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func AllDonors(rt *Runtime) (err error) {
-	name := "All donors"
-	_ = rt.Spreadsheet.NewSheet(name)
+	sheet := "All donors"
+	_ = rt.Spreadsheet.NewSheet(sheet)
 
 	return err
 }
@@ -229,8 +263,8 @@ func AllDonors(rt *Runtime) (err error) {
 // TopDonors selects data for TopDonors, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func TopDonors(rt *Runtime) (err error) {
-	name := "Top donors"
-	_ = rt.Spreadsheet.NewSheet(name)
+	sheet := "Top donors"
+	_ = rt.Spreadsheet.NewSheet(sheet)
 
 	return err
 }
@@ -238,8 +272,8 @@ func TopDonors(rt *Runtime) (err error) {
 // ActivityPages selects data for ActivityPages, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func ActivityPages(rt *Runtime) (err error) {
-	name := "Activity pages"
-	_ = rt.Spreadsheet.NewSheet(name)
+	sheet := "Activity pages"
+	_ = rt.Spreadsheet.NewSheet(sheet)
 
 	return err
 }
@@ -247,8 +281,8 @@ func ActivityPages(rt *Runtime) (err error) {
 // ProjectedRevenue selects data for ProjectedRevenue, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func ProjectedRevenue(rt *Runtime) (err error) {
-	name := "Projected revenue"
-	_ = rt.Spreadsheet.NewSheet(name)
+	sheet := "Projected revenue"
+	_ = rt.Spreadsheet.NewSheet(sheet)
 
 	return err
 }
