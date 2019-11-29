@@ -144,7 +144,7 @@ func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
 //update accepts a key and retrieves or creates a new stats record.  The record
 //is updated with the current activity, then written back to the database.
 func update(rt *Runtime, r goengage.Fundraise, key string) {
-	g := GivingStat{}
+	g := Stat{}
 	rt.DB.Where("id = ?", key).First(&g)
 	if g.CreatedDate == nil {
 		g.ID = key

@@ -39,7 +39,7 @@ func main() {
 	db.AutoMigrate(&goengage.Contact{})
 	db.AutoMigrate(&goengage.CustomFieldValue{})
 	db.AutoMigrate(&eoy.ActivityForm{})
-	db.AutoMigrate(&eoy.GivingStat{})
+	db.AutoMigrate(&eoy.Stat{})
 	db.AutoMigrate(&eoy.Year{})
 	db.AutoMigrate(&eoy.Month{})
 
