@@ -94,38 +94,6 @@ type MonthResult struct {
 	Stat
 }
 
-//Year is used to provide a primary key for storing stats by year.
-type Year struct {
-	ID          int
-	CreatedDate *time.Time
-}
-
-//Fill fills in a spreadsheet using data from the years table.
-func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
-	var a []YearResult
-	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
-	for i, r := range a {
-		if i < len(sheet.KeyNames) {
-			v := r.KeyValue(i)
-			s := sheet.KeyStyles[i]
-			rt.Cell(sheet.Name, row, i, v, s)
-		} else {
-			j := i - len(sheet.KeyNames)
-			v := r.Value(j)
-			s := r.Style(rt, j)
-			rt.Cell(sheet.Name, row, i, v, s)
-		}
-		row++
-	}
-	return row
-}
-
-//YearResult holds a year and a stats record.
-type YearResult struct {
-	ID int
-	Stat
-}
-
 //Cell stores a value in an Excel cell and sets its style.
 func (rt *Runtime) Cell(sheetName string, row, col int, v interface{}, s int) {
 	a := Axis(row, col)
@@ -149,25 +117,6 @@ func Axis(r, c int) string {
 	cols := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	s := string(cols[c])
 	return fmt.Sprintf("%v%v", s, r+1)
-}
-
-//KeyValue returns the value of a key for the YearResult object.
-func (r YearResult) KeyValue(i int) (key interface{}) {
-	switch i {
-	case 0:
-		key = r.ID
-	default:
-		err := fmt.Errorf("Not a valid YearResult index, %v", i)
-		panic(err)
-	}
-	return key
-}
-
-//Results returns an array of objects from the database.
-func (r YearResult) Results(rt *Runtime) []YearResult {
-	var a []YearResult
-	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
-	return a
 }
 
 //NewThisYearSheet builds the data used to decorate the "this year" page.
