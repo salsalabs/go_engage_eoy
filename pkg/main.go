@@ -1,6 +1,7 @@
 package eoy
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -20,66 +21,8 @@ type Runtime struct {
 	CountStyle  int
 	ValueStyle  int
 	KeyStyle    int
-}
-
-//ActivityForm contains a basic set of values for an activity page.
-type ActivityForm struct {
-	ID          string
-	Name        string
-	CreatedDate *time.Time
-}
-
-//Stat is used to store the usual statistics about a set of donations.
-type Stat struct {
-	// supporterID, activityPageID, Year, Year-Month
-	ID              string
-	AllCount        int32
-	AllAmount       float64
-	OneTimeCount    int32
-	OneTimeAmount   float64
-	RecurringCount  int32
-	RecurringAmount float64
-	OfflineCount    int32
-	OfflineAmount   float64
-	RefundsCount    int32
-	RefundsAmount   float64
-	Largest         float64
-	Smallest        float64
-	CreatedDate     *time.Time
-}
-
-//Month is used to provide a primary key for storing stats by month.
-type Month struct {
-	//ID is YYYY-MM
-	ID          string
-	Year        int
-	Month       int
-	CreatedDate *time.Time
-}
-
-//Year is used to provide a primary key for storing stats by year.
-type Year struct {
-	ID          int
-	CreatedDate *time.Time
-}
-
-//Decorator describes how all of the sheets should behave.  An "index" is the
-//offset from the start of the results returned by the database, where descriptive
-//values (from the keys) are followed by a stats object.
-type Decorator interface {
-	//Index is the offset from the beginning of the results
-	//returned by the database.  Keys are first, stats follow.
-	Value(index int) interface{}
-	Style(index int) string
-	Axis(row, index int) string
-}
-
-//Sheet contains the stuff that we need to create and populate a sheet
-//in the EOY spreadsheet.
-type Sheet struct {
-	Name   string
-	Keys   []string
-	Titles []string
+	TitleStyle  int
+	HeaderStyle int
 }
 
 //NewRuntime creates a runtime object and initializes the rt.
@@ -92,6 +35,7 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	countStyle, _ := s.NewStyle(`{"number_format": 3}`)
 	valueStyle, _ := s.NewStyle(`{"number_format": 3}`)
 	keyStyle, _ := s.NewStyle(`{"number_format": 0}`)
+	headerStyle, _ := s.NewStyle(`{"number_format": 0}`)
 
 	rt := Runtime{
 		Env:         e,
@@ -102,7 +46,167 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		CountStyle:  countStyle,
 		ValueStyle:  valueStyle,
 		KeyStyle:    keyStyle,
+		HeaderStyle: headerStyle,
 	}
 
 	return &rt
+}
+
+//KeyValuer returns a key value for the specified offset.
+type KeyValuer interface {
+	KeyValue(i int) interface{}
+}
+
+//Filler inserts stats objects into an Excel spreadsheet starting at the
+//specified zero-based row.
+type Filler interface {
+	Fill(rt *Runtime, sheet Sheet, row int) int
+}
+
+//ActivityForm contains a basic set of values for an activity page.
+type ActivityForm struct {
+	ID          string
+	Name        string
+	CreatedDate *time.Time
+}
+
+//ActivityFormResult holds a month and a stats record.
+type ActivityFormResult struct {
+	ID   string
+	Name int
+	Stat
+}
+
+//Month is used to provide a primary key for storing stats by month.
+type Month struct {
+	//ID is YYYY-MM
+	ID          string
+	Year        int
+	Month       int
+	CreatedDate *time.Time
+}
+
+//MonthResult holds a month and a stats record.
+type MonthResult struct {
+	ID    string
+	Year  int
+	Month int
+	Stat
+}
+
+//Year is used to provide a primary key for storing stats by year.
+type Year struct {
+	ID          int
+	CreatedDate *time.Time
+}
+
+//Fill fills in a spreadsheet using data from the years table.
+func (y Year) Fill(rt *Runtime, sheet Sheet, row int) int {
+	var a []YearResult
+	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
+	for i, r := range a {
+		if i < len(sheet.KeyNames) {
+			v := r.KeyValue(i)
+			s := sheet.KeyStyles[i]
+			rt.Cell(sheet.Name, row, i, v, s)
+		} else {
+			j := i - len(sheet.KeyNames)
+			v := r.Value(j)
+			s := r.Style(rt, j)
+			rt.Cell(sheet.Name, row, i, v, s)
+		}
+		row++
+	}
+	return row
+}
+
+//YearResult holds a year and a stats record.
+type YearResult struct {
+	ID int
+	Stat
+}
+
+//Cell stores a value in an Excel cell and sets its style.
+func (rt *Runtime) Cell(sheetName string, row, col int, v interface{}, s int) {
+	a := Axis(row, col)
+	rt.Spreadsheet.SetCellValue(sheetName, a, v)
+	rt.Spreadsheet.SetCellStyle(sheetName, a, a, s)
+}
+
+//Sheet contains the stuff that we need to create and populate a sheet
+//in the EOY spreadsheet.
+type Sheet struct {
+	Name      string
+	Titles    []string
+	KeyNames  []string
+	KeyStyles []int
+	Filler    Filler
+}
+
+//Axis accepts zero-based row and column and returns an Excel location.
+//Note: Excel location is limited to the range of columns for this app!
+func Axis(r, c int) string {
+	cols := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	s := string(cols[c])
+	return fmt.Sprintf("%v%v", s, r+1)
+}
+
+//KeyValue returns the value of a key for the YearResult object.
+func (r YearResult) KeyValue(i int) (key interface{}) {
+	switch i {
+	case 0:
+		key = r.ID
+	default:
+		err := fmt.Errorf("Not a valid YearResult index, %v", i)
+		panic(err)
+	}
+	return key
+}
+
+//Results returns an array of objects from the database.
+func (r YearResult) Results(rt *Runtime) []YearResult {
+	var a []YearResult
+	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
+	return a
+}
+
+//NewThisYearSheet builds the data used to decorate the "this year" page.
+func (rt *Runtime) NewThisYearSheet() Sheet {
+	filler := Year{}
+	sheet := Sheet{
+		Titles: []string{
+			"Results for the year",
+			"Provided by the Custom Success group At Salsalabs",
+		},
+		Name:      "This year",
+		KeyNames:  []string{"Year"},
+		KeyStyles: []int{rt.KeyStyle},
+		Filler:    filler,
+	}
+	return sheet
+}
+
+//Decorate a sheet by putting it into the spreadsheet as an Excel sheet.
+func (rt *Runtime) Decorate(sheet Sheet) (row int) {
+	for row, t := range sheet.Titles {
+		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
+		rt.Cell(sheet.Name, row, 0, t, rt.HeaderStyle)
+	}
+	row = len(sheet.Titles)
+	rt.Spreadsheet.InsertRow(sheet.Name, row+1)
+	//Key headers are followed by stat headers on a single row.
+	for i, t := range sheet.KeyNames {
+		s := sheet.KeyStyles[i]
+		rt.Cell(sheet.Name, row, i, t, s)
+	}
+	stat := Stat{}
+	for i := int(ID); i < int(StatFieldCount); i++ {
+		col := len(sheet.KeyNames) + i
+		h := stat.Header(i)
+		s := stat.Style(rt, i)
+		rt.Cell(sheet.Name, row, col, h, s)
+	}
+	row++
+	row = sheet.Filler.Fill(rt, sheet, row)
+	return row
 }

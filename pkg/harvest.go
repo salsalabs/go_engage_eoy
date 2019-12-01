@@ -23,20 +23,6 @@ Smallest`
 //harvester declares functions that process data.
 type harvester func(rt *Runtime) (err error)
 
-//yearResult holds a year and a stats record.
-type yearResult struct {
-	ID int
-	Stat
-}
-
-//month result holds a month and a stats record.
-type monthResult struct {
-	ID    string
-	Year  int
-	Month int
-	Stat
-}
-
 //content describes the content of a cell.
 type content struct {
 	Value  interface{}
@@ -132,7 +118,7 @@ func ThisYear(rt *Runtime) (err error) {
 	sheet := "This year"
 	_ = rt.Spreadsheet.NewSheet(sheet)
 
-	var a []yearResult
+	var a []YearResult
 	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
 	y := a[0].ID
 	header := []string{
@@ -172,7 +158,7 @@ func Months(rt *Runtime) (err error) {
 func YearOverYear(rt *Runtime) (err error) {
 	sheet := "Year-over-year"
 	_ = rt.Spreadsheet.NewSheet(sheet)
-	var a []yearResult
+	var a []YearResult
 	rt.DB.Table("years").Select("years.id, stats.*").Joins("left join stats on stats.id = years.id").Order("years.id desc").Scan(&a)
 	h := "Year over year performance"
 	//Sheet header
@@ -213,7 +199,7 @@ func MonthOverMonth(rt *Runtime) (err error) {
 	_ = rt.Spreadsheet.NewSheet(sheet)
 
 	_ = rt.Spreadsheet.NewSheet(sheet)
-	var a []monthResult
+	var a []MonthResult
 	rt.DB.Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Order("month,year").Scan(&a)
 	h := "Month over month performance"
 	//Sheet header
