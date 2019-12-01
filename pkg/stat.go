@@ -142,3 +142,15 @@ func (s Stat) Style(rt *Runtime, i int) int {
 	}
 	return -1
 }
+
+//Fill adds Excel cells for stat values using row and column for position.
+func (s Stat) Fill(rt *Runtime, sheetName string, row, col int) int {
+	for i := AllCount; i < StatFieldCount; i++ {
+		f := int(i)
+		v := s.Value(f)
+		y := s.Style(rt, f)
+		rt.Cell(sheetName, row, f, v, y)
+	}
+	row++
+	return row
+}

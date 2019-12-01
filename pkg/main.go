@@ -60,7 +60,7 @@ type KeyValuer interface {
 //Filler inserts stats objects into an Excel spreadsheet starting at the
 //specified zero-based row.
 type Filler interface {
-	Fill(rt *Runtime, sheet Sheet, row int) int
+	Fill(rt *Runtime, sheet Sheet, row, col int) int
 }
 
 //ActivityForm contains a basic set of values for an activity page.
@@ -101,7 +101,7 @@ type Year struct {
 }
 
 //Fill fills in a spreadsheet using data from the years table.
-func (y Year) Fill(rt *Runtime, sheet Sheet, row int) int {
+func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []YearResult
 	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
 	for i, r := range a {
@@ -207,6 +207,6 @@ func (rt *Runtime) Decorate(sheet Sheet) (row int) {
 		rt.Cell(sheet.Name, row, col, h, s)
 	}
 	row++
-	row = sheet.Filler.Fill(rt, sheet, row)
+	row = sheet.Filler.Fill(rt, sheet, row, 0)
 	return row
 }
