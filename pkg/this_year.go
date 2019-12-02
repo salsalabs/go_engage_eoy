@@ -54,3 +54,21 @@ func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	}
 	return row
 }
+
+//NewThisYearSheet builds the data used to decorate the "this year" page.
+func (rt *Runtime) NewThisYearSheet() Sheet {
+	filler := Year{}
+	result := YearResult{}
+	sheet := Sheet{
+		Titles: []string{
+			"Results for the year",
+			"Provided by the Custom Success group At Salsalabs",
+		},
+		Name:      "This year",
+		KeyNames:  []string{"Year"},
+		KeyStyles: []int{rt.KeyStyle},
+		Filler:    filler,
+		KeyFiller: result,
+	}
+	return sheet
+}
