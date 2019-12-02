@@ -95,6 +95,7 @@ func Axis(r, c int) string {
 //Decorate a sheet by putting it into the spreadsheet as an Excel sheet.
 func (rt *Runtime) Decorate(sheet Sheet) (row int) {
 	_ = rt.Spreadsheet.NewSheet(sheet.Name)
+	//Titles go on separate lines
 	for row, t := range sheet.Titles {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		rt.Cell(sheet.Name, row, 0, t, rt.HeaderStyle)
