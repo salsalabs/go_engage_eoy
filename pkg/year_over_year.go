@@ -45,7 +45,7 @@ func (r YOYearResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 //Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (y YOYear) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []YOYearResult
-	rt.DB.Table("years").Select("years.id, stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
+	rt.DB.Order("years.id desc").Table("years").Select("years.id, stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		r.FillKeys(rt, sheet, row, 0)
@@ -53,4 +53,22 @@ func (y YOYear) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 		row++
 	}
 	return row
+}
+
+//NewYOYearSheet builds the data used to decorate the "this year" page.
+func (rt *Runtime) NewYOYearSheet() Sheet {
+	filler := YOYear{}
+	result := YOYearResult{}
+	sheet := Sheet{
+		Titles: []string{
+			"Year over Year results",
+			"Provided by the Custom Success group At Salsalabs",
+		},
+		Name:      "Year over year",
+		KeyNames:  []string{"Year"},
+		KeyStyles: []int{rt.KeyStyle},
+		Filler:    filler,
+		KeyFiller: result,
+	}
+	return sheet
 }
