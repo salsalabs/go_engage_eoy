@@ -71,8 +71,7 @@ func (r Month) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []MonthResult
 	y := Year{}
 	year := y.Largest(rt)
-	fmt.Printf("Month.Fill, year is %v\n", year)
-	rt.DB.Order("id, year desc").Where("months.year = ?", year).Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Limit(1).Scan(&a)
+	rt.DB.Order("id, year desc").Where("months.year = ?", year).Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		r.FillKeys(rt, sheet, row, 0)
