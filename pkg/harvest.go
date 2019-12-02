@@ -9,7 +9,7 @@ type harvester func(rt *Runtime) (err error)
 func (rt *Runtime) Harvest(fn string) (err error) {
 	functions := []harvester{
 		ThisYear,
-		// Months,
+		Months,
 		YearOverYear,
 		MonthOverMonth,
 		// AllDonors,
@@ -24,6 +24,8 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 			return err
 		}
 	}
+	rt.Spreadsheet.DeleteSheet("Sheet1")
+	rt.Spreadsheet.DeleteSheet("Sheet2")
 	err = rt.StoreSpreadsheet(fn)
 	return err
 }
@@ -36,7 +38,14 @@ func ThisYear(rt *Runtime) (err error) {
 	return err
 }
 
-// YearOverYear selects data for ThisYear, sorts it, tweaks it, then stores it into
+//Months select monthds for the largest year in the months database.
+func Months(rt *Runtime) (err error) {
+	sheet := rt.NewMonthSheet()
+	rt.Decorate(sheet)
+	return err
+}
+
+// YearOverYear selects data for this , sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func YearOverYear(rt *Runtime) (err error) {
 	sheet := rt.NewYOYearSheet()

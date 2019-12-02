@@ -101,12 +101,13 @@ func (rt *Runtime) NewMonthSheet() Sheet {
 	result := MonthResult{}
 	y := Year{}
 	year := y.Largest(rt)
+	name := fmt.Sprintf("Months, %d", year)
 	sheet := Sheet{
 		Titles: []string{
-			fmt.Sprintf("Month over Month results for %d", year),
+			fmt.Sprintf("Results by month for %d", year),
 			"Provided by the Custom Success group At Salsalabs",
 		},
-		Name:      "Month over month",
+		Name:      name,
 		KeyNames:  []string{"Month", "Year"},
 		KeyStyles: []int{rt.KeyStyle, rt.KeyStyle},
 		Filler:    filler,
