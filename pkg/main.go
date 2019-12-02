@@ -56,23 +56,6 @@ type ActivityFormResult struct {
 	Stat
 }
 
-//Month is used to provide a primary key for storing stats by month.
-type Month struct {
-	//ID is YYYY-MM
-	ID          string
-	Year        int
-	Month       int
-	CreatedDate *time.Time
-}
-
-//MonthResult holds a month and a stats record.
-type MonthResult struct {
-	ID    string
-	Year  int
-	Month int
-	Stat
-}
-
 //Sheet contains the stuff that we need to create and populate a sheet
 //in the EOY spreadsheet.
 type Sheet struct {
