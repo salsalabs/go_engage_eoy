@@ -69,12 +69,15 @@ func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 func (rt *Runtime) NewThisYearSheet() Sheet {
 	filler := Year{}
 	result := YearResult{}
+	y := Year{}
+	year := y.Largest(rt)
+	name := fmt.Sprintf("%v Summary", year)
 	sheet := Sheet{
 		Titles: []string{
-			"Results for the year",
+			fmt.Sprintf("Results for %v", year),
 			"Provided by the Custom Success group At Salsalabs",
 		},
-		Name:      "This year",
+		Name:      name,
 		KeyNames:  []string{"Year"},
 		KeyStyles: []int{rt.KeyStyle},
 		Filler:    filler,
