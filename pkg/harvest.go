@@ -13,7 +13,7 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 		YearOverYear,
 		MonthOverMonth,
 		AllDonors,
-		// TopDonors,
+		TopDonors,
 		// ActivityPages,
 		// ProjectedRevenue,
 	}
