@@ -37,7 +37,7 @@ type KeyFiller interface {
 }
 
 //Filler inserts stats objects into an Excel spreadsheet starting at the
-//specified zero-based row.
+//specified zero-based row and column.
 type Filler interface {
 	Fill(rt *Runtime, sheet Sheet, row, col int) int
 }
@@ -94,6 +94,7 @@ func Axis(r, c int) string {
 
 //Decorate a sheet by putting it into the spreadsheet as an Excel sheet.
 func (rt *Runtime) Decorate(sheet Sheet) (row int) {
+	_ = rt.Spreadsheet.NewSheet(sheet.Name)
 	for row, t := range sheet.Titles {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		rt.Cell(sheet.Name, row, 0, t, rt.HeaderStyle)
@@ -106,8 +107,9 @@ func (rt *Runtime) Decorate(sheet Sheet) (row int) {
 		rt.Cell(sheet.Name, row, i, t, s)
 	}
 	stat := Stat{}
-	for i := int(ID); i < int(StatFieldCount); i++ {
-		col := len(sheet.KeyNames) + i
+	for i := int(AllCount); i < int(StatFieldCount); i++ {
+		//"-1" because we are skipping ID
+		col := len(sheet.KeyNames) + i - 1
 		h := stat.Header(i)
 		s := stat.Style(rt, i)
 		rt.Cell(sheet.Name, row, col, h, s)

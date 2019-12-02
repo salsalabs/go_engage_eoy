@@ -149,7 +149,8 @@ func (s Stat) Fill(rt *Runtime, sheetName string, row, col int) int {
 		f := int(i)
 		v := s.Value(f)
 		y := s.Style(rt, f)
-		rt.Cell(sheetName, row, f, v, y)
+		// "-1" because we're skipping the ID...
+		rt.Cell(sheetName, row, col+f-1, v, y)
 	}
 	row++
 	return row

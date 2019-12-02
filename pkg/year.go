@@ -24,6 +24,7 @@ func (r YearResult) KeyValue(i int) (key interface{}) {
 	case 0:
 		key = r.ID
 	default:
+		fmt.Printf("Error in YearResult\n%+v\n", r)
 		err := fmt.Errorf("Not a valid YearResult index, %v", i)
 		panic(err)
 	}
@@ -33,10 +34,10 @@ func (r YearResult) KeyValue(i int) (key interface{}) {
 //FillKeys implements KeyFiller by filling Excel cells with keys from the
 //year table.
 func (r YearResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
-	for j := 0; j <= len(sheet.KeyNames); j++ {
+	for j := 0; j < len(sheet.KeyNames); j++ {
 		v := r.KeyValue(j)
 		s := sheet.KeyStyles[j]
-		rt.Cell(sheet.Name, row, 0, v, s)
+		rt.Cell(sheet.Name, row, col+j, v, s)
 	}
 	return row
 }
@@ -47,7 +48,7 @@ func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
-		r.FillKeys(rt, sheet, row, len(sheet.KeyNames))
+		r.FillKeys(rt, sheet, row, 0)
 		r.Stat.Fill(rt, sheet.Name, row, len(sheet.KeyNames))
 		row++
 	}
