@@ -22,6 +22,16 @@ type MonthResult struct {
 	Stat
 }
 
+//MOMonth is used to provide a primary key for storing stats by month.
+type MOMonth struct {
+	Month
+}
+
+//MOMonthResult holds a month and a stats record for the "month over month" sheet.
+type MOMonthResult struct {
+	MonthResult
+}
+
 //KeyValue implements KeyValuer by returning the value of a key for the
 //MonthResult object.
 func (r MonthResult) KeyValue(i int) (key interface{}) {
@@ -49,10 +59,66 @@ func (r MonthResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 	return row
 }
 
-//NewMOMonthSheet builds the data used to decorate the "month over month" sheet.
-func (rt *Runtime) NewMOMonthSheet() Sheet {
+//FillKeys implements KeyFiller by filling Excel cells with keys from the
+//year table.
+func (r MOMonthResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
+	m := MonthResult{}
+	return m.FillKeys(rt, sheet, row, col)
+}
+
+//Fill implements Filler by filling in a spreadsheet using data from the years table.
+func (r Month) Fill(rt *Runtime, sheet Sheet, row, col int) int {
+	var a []MonthResult
+	y := Year{}
+	year := y.Largest(rt)
+	fmt.Printf("Month.Fill, year is %v\n", year)
+	rt.DB.Order("id, year desc").Where("months.year = ?", year).Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Limit(1).Scan(&a)
+	for _, r := range a {
+		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
+		r.FillKeys(rt, sheet, row, 0)
+		r.Stat.Fill(rt, sheet.Name, row, len(sheet.KeyNames))
+		row++
+	}
+	return row
+}
+
+//Fill implements Filler by filling in a spreadsheet using data from the years table.
+func (r MOMonth) Fill(rt *Runtime, sheet Sheet, row, col int) int {
+	var a []MonthResult
+	rt.DB.Order("id, year desc").Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Scan(&a)
+	for _, r := range a {
+		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
+		r.FillKeys(rt, sheet, row, 0)
+		r.Stat.Fill(rt, sheet.Name, row, len(sheet.KeyNames))
+		row++
+	}
+	return row
+}
+
+//NewMonthSheet builds the data used to decorate the "month over month" sheet.
+func (rt *Runtime) NewMonthSheet() Sheet {
 	filler := Month{}
 	result := MonthResult{}
+	y := Year{}
+	year := y.Largest(rt)
+	sheet := Sheet{
+		Titles: []string{
+			fmt.Sprintf("Month over Month results for %d", year),
+			"Provided by the Custom Success group At Salsalabs",
+		},
+		Name:      "Month over month",
+		KeyNames:  []string{"Month", "Year"},
+		KeyStyles: []int{rt.KeyStyle, rt.KeyStyle},
+		Filler:    filler,
+		KeyFiller: result,
+	}
+	return sheet
+}
+
+//NewMOMonthSheet builds the data used to decorate the "month over month" sheet.
+func (rt *Runtime) NewMOMonthSheet() Sheet {
+	filler := MOMonth{}
+	result := MOMonthResult{}
 	sheet := Sheet{
 		Titles: []string{
 			"Month over Month results",
@@ -65,17 +131,4 @@ func (rt *Runtime) NewMOMonthSheet() Sheet {
 		KeyFiller: result,
 	}
 	return sheet
-}
-
-//Fill implements Filler by filling in a spreadsheet using data from the years table.
-func (y Month) Fill(rt *Runtime, sheet Sheet, row, col int) int {
-	var a []MonthResult
-	rt.DB.Order("id, year desc").Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Scan(&a)
-	for _, r := range a {
-		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
-		r.FillKeys(rt, sheet, row, 0)
-		r.Stat.Fill(rt, sheet.Name, row, len(sheet.KeyNames))
-		row++
-	}
-	return row
 }

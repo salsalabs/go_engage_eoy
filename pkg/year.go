@@ -19,14 +19,12 @@ type YearResult struct {
 
 //YOYear is used to provide a primary key for storing stats by year.
 type YOYear struct {
-	ID          int
-	CreatedDate *time.Time
+	Year
 }
 
 //YOYearResult holds a year and a stats record.
 type YOYearResult struct {
-	ID int
-	Stat
+	YearResult
 }
 
 //KeyValue implements KeyValuer by returning the value of a key for the
