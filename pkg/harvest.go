@@ -10,7 +10,7 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 	functions := []harvester{
 		ThisYear,
 		// Months,
-		// YearOverYear,
+		YearOverYear,
 		// MonthOverMonth,
 		// AllDonors,
 		// TopDonors,
@@ -46,10 +46,36 @@ func (rt *Runtime) NewThisYearSheet() Sheet {
 	return sheet
 }
 
+//NewYOYearSheet builds the data used to decorate the "this year" page.
+func (rt *Runtime) NewYOYearSheet() Sheet {
+	filler := YOYear{}
+	result := YOYearResult{}
+	sheet := Sheet{
+		Titles: []string{
+			"Year over Year results",
+			"Provided by the Custom Success group At Salsalabs",
+		},
+		Name:      "Year over year",
+		KeyNames:  []string{"Year"},
+		KeyStyles: []int{rt.KeyStyle},
+		Filler:    filler,
+		KeyFiller: result,
+	}
+	return sheet
+}
+
 // ThisYear selects data for ThisYear, sorts it, tweaks it, then stores it into
 //the spreadsheet.
 func ThisYear(rt *Runtime) (err error) {
 	sheet := rt.NewThisYearSheet()
+	rt.Decorate(sheet)
+	return err
+}
+
+// YearOverYear selects data for ThisYear, sorts it, tweaks it, then stores it into
+//the spreadsheet.
+func YearOverYear(rt *Runtime) (err error) {
+	sheet := rt.NewYOYearSheet()
 	rt.Decorate(sheet)
 	return err
 }
