@@ -31,6 +31,7 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 //NewThisYearSheet builds the data used to decorate the "this year" page.
 func (rt *Runtime) NewThisYearSheet() Sheet {
 	filler := Year{}
+	result := YearResult{}
 	sheet := Sheet{
 		Titles: []string{
 			"Results for the year",
@@ -40,6 +41,7 @@ func (rt *Runtime) NewThisYearSheet() Sheet {
 		KeyNames:  []string{"Year"},
 		KeyStyles: []int{rt.KeyStyle},
 		Filler:    filler,
+		KeyFiller: result,
 	}
 	return sheet
 }

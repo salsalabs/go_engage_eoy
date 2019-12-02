@@ -30,6 +30,12 @@ type KeyValuer interface {
 	KeyValue(i int) interface{}
 }
 
+//KeyFiller inserts stats objects into an Excel spreadsheet starting at the
+//specified zero-based row.
+type KeyFiller interface {
+	FillKeys(rt *Runtime, sheet Sheet, row, col int) int
+}
+
 //Filler inserts stats objects into an Excel spreadsheet starting at the
 //specified zero-based row.
 type Filler interface {
@@ -75,6 +81,7 @@ type Sheet struct {
 	KeyNames  []string
 	KeyStyles []int
 	Filler    Filler
+	KeyFiller KeyFiller
 }
 
 //Axis accepts zero-based row and column and returns an Excel location.

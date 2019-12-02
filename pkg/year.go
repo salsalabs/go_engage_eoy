@@ -17,7 +17,8 @@ type YearResult struct {
 	Stat
 }
 
-//KeyValue returns the value of a key for the YearResult object.
+//KeyValue implements KeyValuer by returning the value of a key for the
+//YearResult object.
 func (r YearResult) KeyValue(i int) (key interface{}) {
 	switch i {
 	case 0:
@@ -29,21 +30,25 @@ func (r YearResult) KeyValue(i int) (key interface{}) {
 	return key
 }
 
-//Fill fills in a spreadsheet using data from the years table.
+//FillKeys implements KeyFiller by filling Excel cells with keys from the
+//year table.
+func (r YearResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
+	for j := 0; j <= len(sheet.KeyNames); j++ {
+		v := r.KeyValue(j)
+		s := sheet.KeyStyles[j]
+		rt.Cell(sheet.Name, row, 0, v, s)
+	}
+	return row
+}
+
+//Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []YearResult
 	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
-	for i, r := range a {
-		if i < len(sheet.KeyNames) {
-			v := r.KeyValue(i)
-			s := sheet.KeyStyles[i]
-			rt.Cell(sheet.Name, row, i, v, s)
-		} else {
-			j := i - len(sheet.KeyNames)
-			v := r.Value(j)
-			s := r.Style(rt, j)
-			rt.Cell(sheet.Name, row, i, v, s)
-		}
+	for _, r := range a {
+		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
+		r.FillKeys(rt, sheet, row, len(sheet.KeyNames))
+		r.Stat.Fill(rt, sheet.Name, row, len(sheet.KeyNames))
 		row++
 	}
 	return row
