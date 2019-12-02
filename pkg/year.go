@@ -140,3 +140,11 @@ func (rt *Runtime) NewYOYearSheet() Sheet {
 	}
 	return sheet
 }
+
+//Largest returns the most recent year in the years database.
+func (y Year) Largest(rt *Runtime) int {
+	var x int
+	row := rt.DB.Table("years").Select("MAX(id)").Row()
+	row.Scan(&x)
+	return x
+}
