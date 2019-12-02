@@ -12,7 +12,7 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 		Months,
 		YearOverYear,
 		MonthOverMonth,
-		// AllDonors,
+		AllDonors,
 		// TopDonors,
 		// ActivityPages,
 		// ProjectedRevenue,
@@ -61,35 +61,20 @@ func MonthOverMonth(rt *Runtime) (err error) {
 	return err
 }
 
-// // Months selects data for Months, sorts it, tweaks it, then stores it into
-// //the spreadsheet.
-// func Months(rt *Runtime) (err error) {
-// 	sheet := "Month this year"
-// 	_ = rt.Spreadsheet.NewSheet(sheet)
-//
-// 	return err
-// }
-//
+// AllDonors shows details for all donors in the current year.
+func AllDonors(rt *Runtime) (err error) {
+	sheet := rt.NewAllDonorsSheet()
+	rt.Decorate(sheet)
+	return err
+}
 
-//
-// // AllDonors selects data for AllDonors, sorts it, tweaks it, then stores it into
-// //the spreadsheet.
-// func AllDonors(rt *Runtime) (err error) {
-// 	sheet := "All donors"
-// 	_ = rt.Spreadsheet.NewSheet(sheet)
-//
-// 	return err
-// }
-//
-// // TopDonors selects data for TopDonors, sorts it, tweaks it, then stores it into
-// //the spreadsheet.
-// func TopDonors(rt *Runtime) (err error) {
-// 	sheet := "Top donors"
-// 	_ = rt.Spreadsheet.NewSheet(sheet)
-//
-// 	return err
-// }
-//
+// TopDonors shows details for all donors in the current year.
+func TopDonors(rt *Runtime) (err error) {
+	sheet := rt.NewTopDonorsSheet()
+	rt.Decorate(sheet)
+	return err
+}
+
 // // ActivityPages selects data for ActivityPages, sorts it, tweaks it, then stores it into
 // //the spreadsheet.
 // func ActivityPages(rt *Runtime) (err error) {

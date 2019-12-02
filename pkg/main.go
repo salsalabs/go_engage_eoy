@@ -13,16 +13,17 @@ import (
 
 //Runtime contains the variables that we need to run this application.
 type Runtime struct {
-	Env         *goengage.Environment
-	DB          *gorm.DB
-	Log         *log.Logger
-	Channels    []chan goengage.Fundraise
-	Spreadsheet *excelize.File
-	CountStyle  int
-	ValueStyle  int
-	KeyStyle    int
-	TitleStyle  int
-	HeaderStyle int
+	Env           *goengage.Environment
+	DB            *gorm.DB
+	Log           *log.Logger
+	Channels      []chan goengage.Fundraise
+	Spreadsheet   *excelize.File
+	CountStyle    int
+	ValueStyle    int
+	KeyStyle      int
+	TitleStyle    int
+	HeaderStyle   int
+	TopDonorLimit int
 }
 
 //KeyValuer returns a key value for the specified offset.
@@ -116,15 +117,16 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	headerStyle, _ := s.NewStyle(`{"number_format": 0}`)
 
 	rt := Runtime{
-		Env:         e,
-		DB:          db,
-		Log:         log.New(w, "EOY: ", log.LstdFlags),
-		Channels:    channels,
-		Spreadsheet: s,
-		CountStyle:  countStyle,
-		ValueStyle:  valueStyle,
-		KeyStyle:    keyStyle,
-		HeaderStyle: headerStyle,
+		Env:           e,
+		DB:            db,
+		Log:           log.New(w, "EOY: ", log.LstdFlags),
+		Channels:      channels,
+		Spreadsheet:   s,
+		CountStyle:    countStyle,
+		ValueStyle:    valueStyle,
+		KeyStyle:      keyStyle,
+		HeaderStyle:   headerStyle,
+		TopDonorLimit: 20,
 	}
 	return &rt
 }
