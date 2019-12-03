@@ -25,7 +25,7 @@ func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
 	return nil
 }
 
-//Date reads a channel of activities. Thoseare used to populate
+//Date reads a channel of activities. Those are used to populate
 //the Dates table in the database.
 func Date(rt *Runtime, c chan goengage.Fundraise) (err error) {
 	rt.Log.Println("Date: start")
