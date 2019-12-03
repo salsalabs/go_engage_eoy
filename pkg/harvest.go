@@ -14,7 +14,7 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 		MonthOverMonth,
 		AllDonors,
 		TopDonors,
-		// ActivityPages,
+		ActivityForms,
 		// ProjectedRevenue,
 	}
 
@@ -75,15 +75,14 @@ func TopDonors(rt *Runtime) (err error) {
 	return err
 }
 
-// // ActivityPages selects data for ActivityPages, sorts it, tweaks it, then stores it into
-// //the spreadsheet.
-// func ActivityPages(rt *Runtime) (err error) {
-// 	sheet := "Activity pages"
-// 	_ = rt.Spreadsheet.NewSheet(sheet)
-//
-// 	return err
-// }
-//
+// ActivityForms selects data for ActivityForms, sorts it, tweaks it, then stores it into
+//the spreadsheet.
+func ActivityForms(rt *Runtime) (err error) {
+	sheet := rt.NewActivityFormSheet()
+	rt.Decorate(sheet)
+	return err
+}
+
 // // ProjectedRevenue selects data for ProjectedRevenue, sorts it, tweaks it, then stores it into
 // //the spreadsheet.
 // func ProjectedRevenue(rt *Runtime) (err error) {
