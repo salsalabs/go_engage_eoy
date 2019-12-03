@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -17,9 +20,14 @@ const sleepDuration = "10s"
 type actor func(rt *eoy.Runtime, c chan goengage.Fundraise) (err error)
 
 func main() {
+	t := time.Now()
+	y := t.Year()
+	yearText := fmt.Sprintf("Year to use for reporting, default is %d", y)
 	var (
 		app   = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
 		login = app.Flag("login", "YAML file with API token").Required().String()
+		org   = app.Flag("org", "Organization name (for output file)").Required().String()
+		year  = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
 	)
 	app.Parse(os.Args[1:])
 	e, err := goengage.Credentials(*login)
@@ -87,5 +95,11 @@ func main() {
 	log.Printf("Waiting for tasks to complete.")
 	wg.Wait()
 	rt.Log.Printf("All tasks are complete.  Time to build the output.")
-	log.Printf("All tasks are complete.  Time to build the output.")
+	fmt.Println("Harvest start")
+	fn := fmt.Sprintf("%v %d EOY.xlsx", *org, *year)
+	err = rt.Harvest(fn)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Harvest end")
 }
