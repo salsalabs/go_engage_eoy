@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/jinzhu/gorm"
@@ -41,20 +40,6 @@ type KeyFiller interface {
 //specified zero-based row and column.
 type Filler interface {
 	Fill(rt *Runtime, sheet Sheet, row, col int) int
-}
-
-//ActivityForm contains a basic set of values for an activity page.
-type ActivityForm struct {
-	ID          string
-	Name        string
-	CreatedDate *time.Time
-}
-
-//ActivityFormResult holds a month and a stats record.
-type ActivityFormResult struct {
-	ID   string
-	Name int
-	Stat
 }
 
 //Sheet contains the stuff that we need to create and populate a sheet

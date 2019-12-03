@@ -171,7 +171,9 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 		//OfflineCount    int32
 		//OfflineAmount   float64
 		g.Largest = math.Max(g.Largest, t.Amount)
-		g.Smallest = math.Min(g.Smallest, t.Amount)
+		if t.Amount > 0.0 {
+			g.Smallest = math.Min(g.Smallest, t.Amount)
+		}
 
 		rt.DB.Model(&g).Updates(&g)
 	}
