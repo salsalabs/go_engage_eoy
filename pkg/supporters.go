@@ -69,9 +69,6 @@ func (r TopDonorResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 //Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (r Donor) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []DonorResult
-	// y := Year{}
-	// year := y.Largest(rt)
-	//.Where(`stats.created_date LIKE "%?%"`, year)
 	rt.DB.Table("supporters").Select("supporters.first_name, supporters.last_name, stats.*").Joins("left join stats on stats.id = supporters.supporter_id").Order("stats.all_amount desc").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
@@ -85,10 +82,6 @@ func (r Donor) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 //Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (r TopDonor) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []DonorResult
-	// y := Year{}
-	// year := y.Largest(rt)
-	//.Where(`stats.created_date LIKE "%?%"`, year)
-
 	rt.DB.Order("stats.all_amount desc").Table("supporters").Select("first_name, last_name, stats.*").Joins("left join stats on stats.id = supporters.supporter_id").Limit(rt.TopDonorLimit).Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
