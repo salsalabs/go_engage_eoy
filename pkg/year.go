@@ -55,7 +55,7 @@ func (r YearResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 //Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []YearResult
-	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
+	rt.DB.Table("years").Select("years.id, stats.*").Where("years.id = ?", rt.Year).Joins("left join stats on stats.id = years.id").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		r.FillKeys(rt, sheet, row, 0)
