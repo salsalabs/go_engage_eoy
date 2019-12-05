@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/jinzhu/gorm"
@@ -24,6 +25,9 @@ type Runtime struct {
 	HeaderStyle   int
 	TopDonorLimit int
 	Year          int
+	YearStart     time.Time
+	YearEnd       time.Time
+	OrgLocation   *time.Location
 }
 
 //KeyValuer returns a key value for the specified offset.
@@ -91,7 +95,7 @@ func (rt *Runtime) Decorate(sheet Sheet) (row int) {
 }
 
 //NewRuntime creates a runtime object and initializes the rt.
-func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.Fundraise) *Runtime {
+func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.Fundraise, year int, topLimit int, loc string) *Runtime {
 	w, err := os.Create("eoy.log")
 	if err != nil {
 		log.Panic(err)
@@ -101,17 +105,27 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	valueStyle, _ := s.NewStyle(`{"number_format": 3}`)
 	keyStyle, _ := s.NewStyle(`{"number_format": 0}`)
 	headerStyle, _ := s.NewStyle(`{"number_format": 0}`)
-
+	yearStart := time.Date(year, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
+	yearEnd := time.Date(year, time.Month(12), 31, 23, 59, 59, 999, time.UTC)
+	orgLocation, err := time.LoadLocation(loc)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 	rt := Runtime{
-		Env:         e,
-		DB:          db,
-		Log:         log.New(w, "EOY: ", log.LstdFlags),
-		Channels:    channels,
-		Spreadsheet: s,
-		CountStyle:  countStyle,
-		ValueStyle:  valueStyle,
-		KeyStyle:    keyStyle,
-		HeaderStyle: headerStyle,
+		Env:           e,
+		DB:            db,
+		Log:           log.New(w, "EOY: ", log.LstdFlags),
+		Channels:      channels,
+		Spreadsheet:   s,
+		CountStyle:    countStyle,
+		ValueStyle:    valueStyle,
+		KeyStyle:      keyStyle,
+		HeaderStyle:   headerStyle,
+		Year:          year,
+		TopDonorLimit: topLimit,
+		YearStart:     yearStart,
+		YearEnd:       yearEnd,
+		OrgLocation:   orgLocation,
 	}
 	return &rt
 }
@@ -121,4 +135,12 @@ func (rt *Runtime) Cell(sheetName string, row, col int, v interface{}, s int) {
 	a := Axis(row, col)
 	rt.Spreadsheet.SetCellValue(sheetName, a, v)
 	rt.Spreadsheet.SetCellStyle(sheetName, a, a, s)
+}
+
+//Between returns true if the specified time is between Runtime.YearStart and Runtime.YearEnd.
+func (rt *Runtime) Between(t *time.Time) bool {
+	if t.Before(rt.YearStart) || t.After(rt.YearEnd) {
+		return false
+	}
+	return true
 }

@@ -14,7 +14,10 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-const sleepDuration = "10s"
+const (
+	sleepDuration   = "10s"
+	defaultTimezone = "Eastern"
+)
 
 type actor func(rt *eoy.Runtime, c chan goengage.Fundraise) (err error)
 
@@ -28,6 +31,7 @@ func main() {
 		org      = app.Flag("org", "Organization name (for output file)").Required().String()
 		year     = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
 		topLimit = app.Flag("top", "Number in top donors sheet").Default("20").Int()
+		timezone = app.Flag("timezone", "Choose 'Eastern', 'Central', 'Mountain', 'Pacific' or 'Alaska").Default(defaultTimezone).String()
 	)
 	app.Parse(os.Args[1:])
 	e, err := goengage.Credentials(*login)
@@ -52,9 +56,20 @@ func main() {
 	db.AutoMigrate(&eoy.Month{})
 
 	var channels []chan goengage.Fundraise
-	rt := eoy.NewRuntime(e, db, channels)
-	rt.Year = *year
-	rt.TopDonorLimit = *topLimit
+	var orgLocation string
+	switch *timezone {
+	case "Eastern":
+		orgLocation = "America/New York"
+	case "Central":
+		orgLocation = "America/Chicago"
+	case "Mountain":
+		orgLocation = "America/Denver"
+	case "Pacific":
+		orgLocation = "America/Los Angeles"
+	case "Alaska":
+		orgLocation = "American/Nome"
+	}
+	rt := eoy.NewRuntime(e, db, channels, *year, *topLimit, orgLocation)
 	fmt.Println("Harvest start")
 	fn := fmt.Sprintf("%v %d EOY.xlsx", *org, *year)
 	err = rt.Harvest(fn)
