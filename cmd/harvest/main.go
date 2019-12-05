@@ -36,8 +36,9 @@ func main() {
 	app.Parse(os.Args[1:])
 	e, err := goengage.Credentials(*login)
 	if err != nil {
-		panic(err)
+		log.Fatal(e)
 	}
+
 	db, err := gorm.Open("sqlite3", "test.db")
 	if err != nil {
 		log.Fatalf("%v", err)
@@ -67,7 +68,7 @@ func main() {
 	case "Pacific":
 		orgLocation = "America/Los Angeles"
 	case "Alaska":
-		orgLocation = "American/Nome"
+		orgLocation = "America/Nome"
 	}
 	rt := eoy.NewRuntime(e, db, channels, *year, *topLimit, orgLocation)
 	fmt.Println("Harvest start")
