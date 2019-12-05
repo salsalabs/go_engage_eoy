@@ -24,6 +24,7 @@ func (rt *Runtime) Harvest(fn string) (err error) {
 			return err
 		}
 	}
+	rt.Spreadsheet.SetActiveSheet(2)
 	rt.Spreadsheet.DeleteSheet("Sheet1")
 	rt.Spreadsheet.DeleteSheet("Sheet2")
 	err = rt.StoreSpreadsheet(fn)
