@@ -137,8 +137,8 @@ func (rt *Runtime) Cell(sheetName string, row, col int, v interface{}, s int) {
 	rt.Spreadsheet.SetCellStyle(sheetName, a, a, s)
 }
 
-//Between returns true if the specified time is between Runtime.YearStart and Runtime.YearEnd.
-func (rt *Runtime) Between(t *time.Time) bool {
+//GoodYear returns true if the specified time is between Runtime.YearStart and Runtime.YearEnd.
+func (rt *Runtime) GoodYear(t *time.Time) bool {
 	if t.Before(rt.YearStart) || t.After(rt.YearEnd) {
 		return false
 	}

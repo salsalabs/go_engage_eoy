@@ -18,15 +18,19 @@ func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Activity\n", r.ActivityID)
-		rt.DB.Create(&r)
+		if rt.GoodYear(r.ActivityDate) {
+			fmt.Printf("Activity: good year %v\n", r.ActivityDate)
+			rt.Log.Printf("%v Activity\n", r.ActivityID)
+			rt.DB.Create(&r)
+		}
 	}
 	rt.Log.Println("Activity: end")
 	return nil
 }
 
 //Date reads a channel of activities. Those are used to populate
-//the Dates table in the database.
+//the Dates table in the database.  Note that the selected year
+//is not used to filter out records.
 func Date(rt *Runtime, c chan goengage.Fundraise) (err error) {
 	rt.Log.Println("Date: start")
 	for true {
@@ -126,15 +130,18 @@ func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		s := ActivityForm{}
-		rt.Log.Printf("%v Form\n", r.ActivityID)
-		rt.DB.Where("id = ?", r.ActivityFormID).First(&s)
-		if s.CreatedDate == nil {
-			s.ID = r.ActivityFormID
-			s.Name = r.ActivityFormName
-			t := time.Now()
-			s.CreatedDate = &t
-			rt.DB.Create(&s)
+		if rt.GoodYear(r.ActivityDate) {
+			fmt.Printf("Form: good year %v\n", r.ActivityDate)
+			s := ActivityForm{}
+			rt.Log.Printf("%v Form\n", r.ActivityID)
+			rt.DB.Where("id = ?", r.ActivityFormID).First(&s)
+			if s.CreatedDate == nil {
+				s.ID = r.ActivityFormID
+				s.Name = r.ActivityFormName
+				t := time.Now()
+				s.CreatedDate = &t
+				rt.DB.Create(&s)
+			}
 		}
 	}
 	rt.Log.Println("Form: end")
@@ -211,26 +218,29 @@ func Supporter(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Supporter\n", r.ActivityID)
+		if rt.GoodYear(r.ActivityDate) {
+			fmt.Printf("Supporter: good year %v\n", r.ActivityDate)
+			rt.Log.Printf("%v Supporter\n", r.ActivityID)
 
-		s := goengage.Supporter{
-			SupporterID: r.SupporterID,
-		}
-		rt.DB.FirstOrInit(&s, s)
+			s := goengage.Supporter{
+				SupporterID: r.SupporterID,
+			}
+			rt.DB.FirstOrInit(&s, s)
 
-		// rt.DB.Where("supporter_id = ?", r.SupporterID).First(&s)
-		if s.CreatedDate == nil {
-			t, err := goengage.FetchSupporter(rt.Env, r.SupporterID)
-			if err != nil {
-				return err
+			// rt.DB.Where("supporter_id = ?", r.SupporterID).First(&s)
+			if s.CreatedDate == nil {
+				t, err := goengage.FetchSupporter(rt.Env, r.SupporterID)
+				if err != nil {
+					return err
+				}
+				if t == nil {
+					x := time.Now()
+					s.CreatedDate = &x
+				} else {
+					s = *t
+				}
+				rt.DB.Create(&s)
 			}
-			if t == nil {
-				x := time.Now()
-				s.CreatedDate = &x
-			} else {
-				s = *t
-			}
-			rt.DB.Create(&s)
 		}
 	}
 	rt.Log.Println("Supporter: end")
@@ -246,15 +256,19 @@ func Transaction(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Transaction\n", r.ActivityID)
 
-		if len(r.Transactions) != 0 {
-			for _, c := range r.Transactions {
-				c.ActivityID = r.ActivityID
-				rt.DB.Create(&c)
+		rt.Log.Printf("%v Transaction\n", r.ActivityID)
+		if rt.GoodYear(r.ActivityDate) {
+			fmt.Printf("Transaction: good year %v\n", r.ActivityDate)
+
+			if len(r.Transactions) != 0 {
+				for _, c := range r.Transactions {
+					c.ActivityID = r.ActivityID
+					rt.DB.Create(&c)
+				}
 			}
 		}
 	}
-	rt.Log.Println("Transaction: start")
+	rt.Log.Println("Transaction: end")
 	return nil
 }
