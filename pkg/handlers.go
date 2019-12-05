@@ -19,7 +19,6 @@ func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			break
 		}
 		if rt.GoodYear(r.ActivityDate) {
-			fmt.Printf("Activity: good year %v\n", r.ActivityDate)
 			rt.Log.Printf("%v Activity\n", r.ActivityID)
 			rt.DB.Create(&r)
 		}
@@ -131,7 +130,6 @@ func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			break
 		}
 		if rt.GoodYear(r.ActivityDate) {
-			fmt.Printf("Form: good year %v\n", r.ActivityDate)
 			s := ActivityForm{}
 			rt.Log.Printf("%v Form\n", r.ActivityID)
 			rt.DB.Where("id = ?", r.ActivityFormID).First(&s)
@@ -219,7 +217,6 @@ func Supporter(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			break
 		}
 		if rt.GoodYear(r.ActivityDate) {
-			fmt.Printf("Supporter: good year %v\n", r.ActivityDate)
 			rt.Log.Printf("%v Supporter\n", r.ActivityID)
 
 			s := goengage.Supporter{
@@ -259,8 +256,6 @@ func Transaction(rt *Runtime, c chan goengage.Fundraise) (err error) {
 
 		rt.Log.Printf("%v Transaction\n", r.ActivityID)
 		if rt.GoodYear(r.ActivityDate) {
-			fmt.Printf("Transaction: good year %v\n", r.ActivityDate)
-
 			if len(r.Transactions) != 0 {
 				for _, c := range r.Transactions {
 					c.ActivityID = r.ActivityID
