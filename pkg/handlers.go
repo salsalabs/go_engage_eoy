@@ -164,21 +164,24 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 	for _, t := range r.Transactions {
 		g.AllCount++
 		g.AllAmount = g.AllAmount + t.Amount
-		switch r.DonationType {
-		case goengage.OneTime:
-			g.OneTimeCount++
-			g.OneTimeAmount += t.Amount
-		case goengage.Recurring:
-			g.RecurringCount++
-			g.RecurringAmount += t.Amount
+		if r.WasImported {
+			g.OfflineCount++
+			g.OfflineAmount += t.Amount
+		} else {
+			switch r.DonationType {
+			case goengage.OneTime:
+				g.OneTimeCount++
+				g.OneTimeAmount += t.Amount
+			case goengage.Recurring:
+				g.RecurringCount++
+				g.RecurringAmount += t.Amount
+			}
+			switch t.Type {
+			case goengage.Refund:
+				g.RefundsCount++
+				g.RefundsAmount += t.Amount
+			}
 		}
-		switch t.Type {
-		case goengage.Refund:
-			g.RefundsCount++
-			g.RefundsAmount += t.Amount
-		}
-		//OfflineCount    int32
-		//OfflineAmount   float64
 		g.Largest = math.Max(g.Largest, t.Amount)
 		if t.Amount > 0.0 {
 			g.Smallest = math.Min(g.Smallest, t.Amount)
