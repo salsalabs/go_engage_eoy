@@ -2,7 +2,6 @@ package eoy
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"time"
 
@@ -97,7 +96,7 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		if err != nil {
 			return err
 		}
-		log.Printf("Drive: read %d from offset %6d\n", count, rqt.Payload.Offset)
+		rt.Log.Printf("Drive: read %d from offset %6d\n", count, rqt.Payload.Offset)
 		rqt.Payload.Offset = rqt.Payload.Offset + count
 		count = int32(len(resp.Payload.Activities))
 		for _, r := range resp.Payload.Activities {
