@@ -28,9 +28,9 @@ func main() {
 	yearText := fmt.Sprintf("Year to use for reporting, default is %d", y)
 	timezoneText := fmt.Sprintf("Choose '%v' (the default), 'Central', 'Mountain', 'Pacific' or 'Alaska'", defaultTimezone)
 	var (
-		app   = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
-		login = app.Flag("login", "YAML file with API token").Required().String()
-		// org      = app.Flag("org", "Organization name (for output file)").Required().String()
+		app      = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
+		login    = app.Flag("login", "YAML file with API token").Required().String()
+		org      = app.Flag("org", "Organization name (for output file)").Required().String()
 		year     = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
 		topLimit = app.Flag("top", "Number in top donors sheet").Default("20").Int()
 		timezone = app.Flag("timezone", timezoneText).Default(defaultTimezone).String()
@@ -40,20 +40,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err := gorm.Open("sqlite3", "test.db")
+	db, err := gorm.Open("sqlite3", "eoy.sqlite3")
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 	defer db.Close()
 
 	// Migrate the schema
+	db.AutoMigrate(&eoy.Stat{})
 	db.AutoMigrate(&goengage.Fundraise{})
 	db.AutoMigrate(&goengage.Transaction{})
 	db.AutoMigrate(&goengage.Supporter{})
 	db.AutoMigrate(&goengage.Contact{})
 	db.AutoMigrate(&goengage.CustomFieldValue{})
 	db.AutoMigrate(&eoy.ActivityForm{})
-	db.AutoMigrate(&eoy.Stat{})
 	db.AutoMigrate(&eoy.Year{})
 	db.AutoMigrate(&eoy.Month{})
 
@@ -100,6 +100,7 @@ func main() {
 			wg.Done()
 		})(i, rt, &wg)
 	}
+	rt.Log.Printf("Begin EOY report for %v, %v\n", rt.Year, *org)
 	go (func(rt *eoy.Runtime, wg *sync.WaitGroup, done chan bool) {
 		wg.Add(1)
 		err := eoy.Drive(rt, done)
@@ -111,14 +112,14 @@ func main() {
 	<-done
 	//d, _ := time.ParseDuration(sleepDuration)
 	//time.Sleep(d)
-	log.Printf("Waiting for tasks to complete.")
+	rt.Log.Printf("Waiting for tasks to complete.")
 	wg.Wait()
 	rt.Log.Printf("All tasks are complete.  Time to build the output.")
-	// fmt.Println("Harvest start")
-	// fn := fmt.Sprintf("%v %d EOY.xlsx", *org, *year)
-	// err = rt.Harvest(fn)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println("Harvest end")
+	fmt.Println("Harvest start")
+	fn := fmt.Sprintf("%v %d EOY.xlsx", *org, *year)
+	err = rt.Harvest(fn)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Harvest end")
 }
