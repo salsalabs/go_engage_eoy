@@ -74,13 +74,13 @@ func main() {
 	var orgLocation string
 	switch *timezone {
 	case "Eastern":
-		orgLocation = "America/New York"
+		orgLocation = "America/New_York"
 	case "Central":
 		orgLocation = "America/Chicago"
 	case "Mountain":
 		orgLocation = "America/Denver"
 	case "Pacific":
-		orgLocation = "America/Los Angeles"
+		orgLocation = "America/Los_Angeles"
 	case "Alaska":
 		orgLocation = "America/Nome"
 	}
