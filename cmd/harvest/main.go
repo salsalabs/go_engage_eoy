@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -17,9 +19,15 @@ const sleepDuration = "10s"
 type actor func(rt *eoy.Runtime, c chan goengage.Fundraise) (err error)
 
 func main() {
+	t := time.Now()
+	y := t.Year()
+	yearText := fmt.Sprintf("Year to use for reporting, default is %d", y)
 	var (
-		app   = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
-		login = app.Flag("login", "YAML file with API token").Required().String()
+		app      = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
+		login    = app.Flag("login", "YAML file with API token").Required().String()
+		org      = app.Flag("org", "Organization name (for output file)").Required().String()
+		year     = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
+		topLimit = app.Flag("top", "Number in top donors sheet").Default("20").Int()
 	)
 	app.Parse(os.Args[1:])
 	e, err := goengage.Credentials(*login)
@@ -45,8 +53,11 @@ func main() {
 
 	var channels []chan goengage.Fundraise
 	rt := eoy.NewRuntime(e, db, channels)
+	rt.Year = *year
+	rt.TopDonorLimit = *topLimit
 	fmt.Println("Harvest start")
-	err = rt.Harvest("eoy_test.xlsx")
+	fn := fmt.Sprintf("%v %d EOY.xlsx", *org, *year)
+	err = rt.Harvest(fn)
 	if err != nil {
 		panic(err)
 	}

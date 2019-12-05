@@ -24,10 +24,11 @@ func main() {
 	y := t.Year()
 	yearText := fmt.Sprintf("Year to use for reporting, default is %d", y)
 	var (
-		app   = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
-		login = app.Flag("login", "YAML file with API token").Required().String()
-		org   = app.Flag("org", "Organization name (for output file)").Required().String()
-		year  = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
+		app      = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
+		login    = app.Flag("login", "YAML file with API token").Required().String()
+		org      = app.Flag("org", "Organization name (for output file)").Required().String()
+		year     = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
+		topLimit = app.Flag("top", "Number in top donors sheet").Default("20").Int()
 	)
 	app.Parse(os.Args[1:])
 	e, err := goengage.Credentials(*login)
@@ -68,6 +69,9 @@ func main() {
 
 	done := make(chan bool)
 	rt := eoy.NewRuntime(e, db, channels)
+	rt.Year = *year
+	rt.TopDonorLimit = *topLimit
+
 	var wg sync.WaitGroup
 	for i := range functions {
 		go (func(i int, rt *eoy.Runtime, wg *sync.WaitGroup) {

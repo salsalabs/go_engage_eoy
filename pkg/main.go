@@ -23,6 +23,7 @@ type Runtime struct {
 	TitleStyle    int
 	HeaderStyle   int
 	TopDonorLimit int
+	Year          int
 }
 
 //KeyValuer returns a key value for the specified offset.
@@ -102,16 +103,15 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	headerStyle, _ := s.NewStyle(`{"number_format": 0}`)
 
 	rt := Runtime{
-		Env:           e,
-		DB:            db,
-		Log:           log.New(w, "EOY: ", log.LstdFlags),
-		Channels:      channels,
-		Spreadsheet:   s,
-		CountStyle:    countStyle,
-		ValueStyle:    valueStyle,
-		KeyStyle:      keyStyle,
-		HeaderStyle:   headerStyle,
-		TopDonorLimit: 20,
+		Env:         e,
+		DB:          db,
+		Log:         log.New(w, "EOY: ", log.LstdFlags),
+		Channels:    channels,
+		Spreadsheet: s,
+		CountStyle:  countStyle,
+		ValueStyle:  valueStyle,
+		KeyStyle:    keyStyle,
+		HeaderStyle: headerStyle,
 	}
 	return &rt
 }

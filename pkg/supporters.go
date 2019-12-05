@@ -96,12 +96,10 @@ func (r TopDonor) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 func (rt *Runtime) NewAllDonorsSheet() Sheet {
 	filler := Donor{}
 	result := DonorResult{}
-	y := Year{}
-	year := y.Largest(rt)
-	name := fmt.Sprintf("All donors, %d", year)
+	name := fmt.Sprintf("All donors, %d", rt.Year)
 	sheet := Sheet{
 		Titles: []string{
-			fmt.Sprintf("Ranked donors for %d", year),
+			fmt.Sprintf("Ranked donors for %d", rt.Year),
 			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,
@@ -117,12 +115,10 @@ func (rt *Runtime) NewAllDonorsSheet() Sheet {
 func (rt *Runtime) NewTopDonorsSheet() Sheet {
 	filler := TopDonor{}
 	result := TopDonorResult{}
-	y := Year{}
-	year := y.Largest(rt)
-	name := fmt.Sprintf("Top donors for %d", year)
+	name := fmt.Sprintf("Top donors for %d", rt.Year)
 	sheet := Sheet{
 		Titles: []string{
-			fmt.Sprintf("Top %d donors for %d", rt.TopDonorLimit, year),
+			fmt.Sprintf("Top %d donors for %d", rt.TopDonorLimit, rt.Year),
 			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,

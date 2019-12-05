@@ -69,9 +69,7 @@ func (r MOMonthResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 //Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (r Month) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []MonthResult
-	y := Year{}
-	year := y.Largest(rt)
-	rt.DB.Order("id, year desc").Where("months.year = ?", year).Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Scan(&a)
+	rt.DB.Order("id, year desc").Where("months.year = ?", rt.Year).Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		r.FillKeys(rt, sheet, row, 0)
@@ -98,12 +96,10 @@ func (r MOMonth) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 func (rt *Runtime) NewMonthSheet() Sheet {
 	filler := Month{}
 	result := MonthResult{}
-	y := Year{}
-	year := y.Largest(rt)
-	name := fmt.Sprintf("Months, %d", year)
+	name := fmt.Sprintf("Months, %d", rt.Year)
 	sheet := Sheet{
 		Titles: []string{
-			fmt.Sprintf("Results by month for %d", year),
+			fmt.Sprintf("Results by month for %d", rt.Year),
 			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,
