@@ -87,7 +87,6 @@ func main() {
 
 	done := make(chan bool)
 	rt := eoy.NewRuntime(e, db, channels, *year, *topLimit, orgLocation)
-	fmt.Printf("Runtime is %+v\n", rt)
 	var wg sync.WaitGroup
 	for i := range functions {
 		go (func(i int, rt *eoy.Runtime, wg *sync.WaitGroup) {
