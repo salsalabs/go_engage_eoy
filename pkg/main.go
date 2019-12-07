@@ -1,6 +1,7 @@
 package eoy
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -53,6 +54,34 @@ type Sheet struct {
 	KeyFiller KeyFiller
 }
 
+//font contains the font definition for a style.
+type font struct {
+	Bold   bool   `json:"bold,omitempty"`
+	Italic bool   `json:"italic,omitempty"`
+	Family string `json:"family,omitempty"`
+	Size   int    `json:"size,omitempty"`
+	Color  string `json:"color,omitempty"`
+}
+
+//style contains style declarations, ready to marshall into JSON.
+type style struct {
+	NumberFormat int  `json:"number_format,omitempty"`
+	Font         font `json:"font"`
+}
+
+//StyleInt converts a style for use in an Excelize spreadsheet.
+func (rt *Runtime) StyleInt(s style) int {
+	b, err := json.Marshal(s)
+	if err != nil {
+		log.Panic(err)
+	}
+	x, _ := rt.Spreadsheet.NewStyle(string(b))
+	if err != nil {
+		log.Panic(err)
+	}
+	return x
+}
+
 //Axis accepts zero-based row and column and returns an Excel location.
 //Note: Excel location is limited to the range of columns for this app!
 func Axis(r, c int) string {
@@ -95,24 +124,40 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	if err != nil {
 		log.Panic(err)
 	}
-	s := excelize.NewFile()
-	countStyle, _ := s.NewStyle(`{"number_format": 3}`)
-	valueStyle, _ := s.NewStyle(`{"number_format": 3}`)
-	keyStyle, _ := s.NewStyle(`{"number_format": 0}`)
-	headerStyle, _ := s.NewStyle(`{"number_format": 0}`)
 
 	rt := Runtime{
-		Env:           e,
-		DB:            db,
-		Log:           log.New(w, "EOY: ", log.LstdFlags),
-		Channels:      channels,
-		Spreadsheet:   s,
-		CountStyle:    countStyle,
-		ValueStyle:    valueStyle,
-		KeyStyle:      keyStyle,
-		HeaderStyle:   headerStyle,
-		TopDonorLimit: 20,
+		Env:         e,
+		DB:          db,
+		Log:         log.New(w, "EOY: ", log.LstdFlags),
+		Channels:    channels,
+		Spreadsheet: excelize.NewFile(),
 	}
+
+	f := font{Size: 18}
+	s := style{
+		NumberFormat: 3,
+		Font:         f,
+	}
+	rt.CountStyle = rt.StyleInt(s)
+
+	s = style{
+		NumberFormat: 3,
+		Font:         f,
+	}
+	rt.ValueStyle = rt.StyleInt(s)
+
+	s = style{
+		NumberFormat: 0,
+		Font:         f,
+	}
+	rt.KeyStyle = rt.StyleInt(s)
+
+	f = font{Size: 21, Bold: True, Color: "darkblue"}
+	s = style{
+		NumberFormat: 0,
+		Font:         f,
+	}
+	rt.HeaderStyle = rt.StyleInt(s)
 	return &rt
 }
 
