@@ -71,5 +71,7 @@ func (rt *Runtime) NewActivityFormSheet() Sheet {
 		Filler:    filler,
 		KeyFiller: result,
 	}
+	w, _ := rt.Spreadsheet.GetColWidth(sheet.Name, "A")
+	_ = rt.Spreadsheet.SetColWidth(sheet.Name, "A", "A", w*4.0)
 	return sheet
 }

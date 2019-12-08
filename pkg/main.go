@@ -130,6 +130,10 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		log.Panic(err)
 	}
 
+	yearStart := time.Date(year, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
+	yearEnd := time.Date(year, time.Month(12), 31, 23, 59, 59, 999, time.UTC)
+	orgLocation, err := time.LoadLocation(loc)
+
 	rt := Runtime{
 		Env:         e,
 		DB:          db,
@@ -143,7 +147,7 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		OrgLocation:   orgLocation,
 	}
 
-	f := font{Size: 18}
+	f := font{Size: 12}
 	s := style{
 		NumberFormat: 3,
 		Font:         f,
@@ -162,7 +166,7 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	}
 	rt.KeyStyle = rt.StyleInt(s)
 
-	f = font{Size: 21, Bold: True, Color: "darkblue"}
+	f = font{Size: 14, Bold: true, Color: "darkblue"}
 	s = style{
 		NumberFormat: 0,
 		Font:         f,
