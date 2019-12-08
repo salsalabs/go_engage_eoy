@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/jinzhu/gorm"
@@ -24,6 +25,10 @@ type Runtime struct {
 	TitleStyle    int
 	HeaderStyle   int
 	TopDonorLimit int
+	Year          int
+	YearStart     time.Time
+	YearEnd       time.Time
+	OrgLocation   *time.Location
 }
 
 //KeyValuer returns a key value for the specified offset.
@@ -119,7 +124,7 @@ func (rt *Runtime) Decorate(sheet Sheet) (row int) {
 }
 
 //NewRuntime creates a runtime object and initializes the rt.
-func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.Fundraise) *Runtime {
+func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.Fundraise, year int, topLimit int, loc string) *Runtime {
 	w, err := os.Create("eoy.log")
 	if err != nil {
 		log.Panic(err)
@@ -131,6 +136,11 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		Log:         log.New(w, "EOY: ", log.LstdFlags),
 		Channels:    channels,
 		Spreadsheet: excelize.NewFile(),
+		Year:          year,
+		TopDonorLimit: topLimit,
+		YearStart:     yearStart,
+		YearEnd:       yearEnd,
+		OrgLocation:   orgLocation,
 	}
 
 	f := font{Size: 18}
@@ -166,4 +176,12 @@ func (rt *Runtime) Cell(sheetName string, row, col int, v interface{}, s int) {
 	a := Axis(row, col)
 	rt.Spreadsheet.SetCellValue(sheetName, a, v)
 	rt.Spreadsheet.SetCellStyle(sheetName, a, a, s)
+}
+
+//GoodYear returns true if the specified time is between Runtime.YearStart and Runtime.YearEnd.
+func (rt *Runtime) GoodYear(t *time.Time) bool {
+	if t.Before(rt.YearStart) || t.After(rt.YearEnd) {
+		return false
+	}
+	return true
 }

@@ -55,7 +55,7 @@ func (r YearResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 //Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []YearResult
-	rt.DB.Table("years").Select("max(years.id), stats.*").Joins("left join stats on stats.id = years.id").Scan(&a)
+	rt.DB.Table("years").Select("years.id, stats.*").Where("years.id = ?", rt.Year).Joins("left join stats on stats.id = years.id").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		r.FillKeys(rt, sheet, row, 0)
@@ -69,12 +69,10 @@ func (y Year) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 func (rt *Runtime) NewThisYearSheet() Sheet {
 	filler := Year{}
 	result := YearResult{}
-	y := Year{}
-	year := y.Largest(rt)
-	name := fmt.Sprintf("%v Summary", year)
+	name := fmt.Sprintf("%v Summary", rt.Year)
 	sheet := Sheet{
 		Titles: []string{
-			fmt.Sprintf("Results for %v", year),
+			fmt.Sprintf("Results for %v", rt.Year),
 			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,
@@ -140,12 +138,4 @@ func (rt *Runtime) NewYOYearSheet() Sheet {
 		KeyFiller: result,
 	}
 	return sheet
-}
-
-//Largest returns the most recent year in the years database.
-func (y Year) Largest(rt *Runtime) int {
-	var x int
-	row := rt.DB.Table("years").Select("MAX(id)").Row()
-	row.Scan(&x)
-	return x
 }

@@ -15,7 +15,10 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-const sleepDuration = "10s"
+const (
+	sleepDuration   = "10s"
+	defaultTimezone = "Eastern"
+)
 
 type actor func(rt *eoy.Runtime, c chan goengage.Fundraise) (err error)
 
@@ -23,31 +26,34 @@ func main() {
 	t := time.Now()
 	y := t.Year()
 	yearText := fmt.Sprintf("Year to use for reporting, default is %d", y)
+	timezoneText := fmt.Sprintf("Choose '%v' (the default), 'Central', 'Mountain', 'Pacific' or 'Alaska'", defaultTimezone)
 	var (
-		app   = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
-		login = app.Flag("login", "YAML file with API token").Required().String()
-		org   = app.Flag("org", "Organization name (for output file)").Required().String()
-		year  = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
+		app      = kingpin.New("Engage EOY Report", "A command-line app to create an Engage EOY")
+		login    = app.Flag("login", "YAML file with API token").Required().String()
+		org      = app.Flag("org", "Organization name (for output file)").Required().String()
+		year     = app.Flag("year", yearText).Default(strconv.Itoa(y)).Int()
+		topLimit = app.Flag("top", "Number in top donors sheet").Default("20").Int()
+		timezone = app.Flag("timezone", timezoneText).Default(defaultTimezone).String()
 	)
 	app.Parse(os.Args[1:])
 	e, err := goengage.Credentials(*login)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	db, err := gorm.Open("sqlite3", "test.db")
+	db, err := gorm.Open("sqlite3", "eoy.sqlite3")
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 	defer db.Close()
 
 	// Migrate the schema
+	db.AutoMigrate(&eoy.Stat{})
 	db.AutoMigrate(&goengage.Fundraise{})
 	db.AutoMigrate(&goengage.Transaction{})
 	db.AutoMigrate(&goengage.Supporter{})
 	db.AutoMigrate(&goengage.Contact{})
 	db.AutoMigrate(&goengage.CustomFieldValue{})
 	db.AutoMigrate(&eoy.ActivityForm{})
-	db.AutoMigrate(&eoy.Stat{})
 	db.AutoMigrate(&eoy.Year{})
 	db.AutoMigrate(&eoy.Month{})
 
@@ -65,9 +71,22 @@ func main() {
 		c := make(chan goengage.Fundraise, 100)
 		channels = append(channels, c)
 	}
+	var orgLocation string
+	switch *timezone {
+	case "Eastern":
+		orgLocation = "America/New_York"
+	case "Central":
+		orgLocation = "America/Chicago"
+	case "Mountain":
+		orgLocation = "America/Denver"
+	case "Pacific":
+		orgLocation = "America/Los_Angeles"
+	case "Alaska":
+		orgLocation = "America/Nome"
+	}
 
 	done := make(chan bool)
-	rt := eoy.NewRuntime(e, db, channels)
+	rt := eoy.NewRuntime(e, db, channels, *year, *topLimit, orgLocation)
 	var wg sync.WaitGroup
 	for i := range functions {
 		go (func(i int, rt *eoy.Runtime, wg *sync.WaitGroup) {
@@ -81,6 +100,7 @@ func main() {
 			wg.Done()
 		})(i, rt, &wg)
 	}
+	rt.Log.Printf("Begin EOY report for %v, %v\n", rt.Year, *org)
 	go (func(rt *eoy.Runtime, wg *sync.WaitGroup, done chan bool) {
 		wg.Add(1)
 		err := eoy.Drive(rt, done)
@@ -92,7 +112,7 @@ func main() {
 	<-done
 	//d, _ := time.ParseDuration(sleepDuration)
 	//time.Sleep(d)
-	log.Printf("Waiting for tasks to complete.")
+	rt.Log.Printf("Waiting for tasks to complete.")
 	wg.Wait()
 	rt.Log.Printf("All tasks are complete.  Time to build the output.")
 	fmt.Println("Harvest start")

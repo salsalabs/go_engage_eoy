@@ -18,15 +18,18 @@ func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Activity\n", r.ActivityID)
-		rt.DB.Create(&r)
+		if rt.GoodYear(r.ActivityDate) {
+			rt.Log.Printf("%v Activity\n", r.ActivityID)
+			rt.DB.Create(&r)
+		}
 	}
 	rt.Log.Println("Activity: end")
 	return nil
 }
 
 //Date reads a channel of activities. Those are used to populate
-//the Dates table in the database.
+//the Dates table in the database.  Note that the selected year
+//is not used to filter out records.
 func Date(rt *Runtime, c chan goengage.Fundraise) (err error) {
 	rt.Log.Println("Date: start")
 	for true {
@@ -94,7 +97,11 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		if err != nil {
 			return err
 		}
-		log.Printf("Drive: read %d from offset %6d\n", count, rqt.Payload.Offset)
+		m := fmt.Sprintf("Drive: read from offset %6d / %6d\n", resp.Payload.Offset, resp.Payload.Total)
+		rt.Log.Printf(m)
+		if rqt.Payload.Offset%500 == 0 {
+			log.Printf(m)
+		}
 		rqt.Payload.Offset = rqt.Payload.Offset + count
 		count = int32(len(resp.Payload.Activities))
 		for _, r := range resp.Payload.Activities {
@@ -126,15 +133,17 @@ func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		s := ActivityForm{}
-		rt.Log.Printf("%v Form\n", r.ActivityID)
-		rt.DB.Where("id = ?", r.ActivityFormID).First(&s)
-		if s.CreatedDate == nil {
-			s.ID = r.ActivityFormID
-			s.Name = r.ActivityFormName
-			t := time.Now()
-			s.CreatedDate = &t
-			rt.DB.Create(&s)
+		if rt.GoodYear(r.ActivityDate) {
+			s := ActivityForm{}
+			rt.Log.Printf("%v Form\n", r.ActivityID)
+			rt.DB.Where("id = ?", r.ActivityFormID).First(&s)
+			if s.CreatedDate == nil {
+				s.ID = r.ActivityFormID
+				s.Name = r.ActivityFormName
+				t := time.Now()
+				s.CreatedDate = &t
+				rt.DB.Create(&s)
+			}
 		}
 	}
 	rt.Log.Println("Form: end")
@@ -155,21 +164,24 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 	for _, t := range r.Transactions {
 		g.AllCount++
 		g.AllAmount = g.AllAmount + t.Amount
-		switch r.DonationType {
-		case goengage.OneTime:
-			g.OneTimeCount++
-			g.OneTimeAmount += t.Amount
-		case goengage.Recurring:
-			g.RecurringCount++
-			g.RecurringAmount += t.Amount
+		if r.WasImported {
+			g.OfflineCount++
+			g.OfflineAmount += t.Amount
+		} else {
+			switch r.DonationType {
+			case goengage.OneTime:
+				g.OneTimeCount++
+				g.OneTimeAmount += t.Amount
+			case goengage.Recurring:
+				g.RecurringCount++
+				g.RecurringAmount += t.Amount
+			}
+			switch t.Type {
+			case goengage.Refund:
+				g.RefundsCount++
+				g.RefundsAmount += t.Amount
+			}
 		}
-		switch t.Type {
-		case goengage.Refund:
-			g.RefundsCount++
-			g.RefundsAmount += t.Amount
-		}
-		//OfflineCount    int32
-		//OfflineAmount   float64
 		g.Largest = math.Max(g.Largest, t.Amount)
 		if t.Amount > 0.0 {
 			g.Smallest = math.Min(g.Smallest, t.Amount)
@@ -211,26 +223,28 @@ func Supporter(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Supporter\n", r.ActivityID)
+		if rt.GoodYear(r.ActivityDate) {
+			rt.Log.Printf("%v Supporter\n", r.ActivityID)
 
-		s := goengage.Supporter{
-			SupporterID: r.SupporterID,
-		}
-		rt.DB.FirstOrInit(&s, s)
+			s := goengage.Supporter{
+				SupporterID: r.SupporterID,
+			}
+			rt.DB.FirstOrInit(&s, s)
 
-		// rt.DB.Where("supporter_id = ?", r.SupporterID).First(&s)
-		if s.CreatedDate == nil {
-			t, err := goengage.FetchSupporter(rt.Env, r.SupporterID)
-			if err != nil {
-				return err
+			// rt.DB.Where("supporter_id = ?", r.SupporterID).First(&s)
+			if s.CreatedDate == nil {
+				t, err := goengage.FetchSupporter(rt.Env, r.SupporterID)
+				if err != nil {
+					return err
+				}
+				if t == nil {
+					x := time.Now()
+					s.CreatedDate = &x
+				} else {
+					s = *t
+				}
+				rt.DB.Create(&s)
 			}
-			if t == nil {
-				x := time.Now()
-				s.CreatedDate = &x
-			} else {
-				s = *t
-			}
-			rt.DB.Create(&s)
 		}
 	}
 	rt.Log.Println("Supporter: end")
@@ -246,15 +260,17 @@ func Transaction(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Transaction\n", r.ActivityID)
 
-		if len(r.Transactions) != 0 {
-			for _, c := range r.Transactions {
-				c.ActivityID = r.ActivityID
-				rt.DB.Create(&c)
+		rt.Log.Printf("%v Transaction\n", r.ActivityID)
+		if rt.GoodYear(r.ActivityDate) {
+			if len(r.Transactions) != 0 {
+				for _, c := range r.Transactions {
+					c.ActivityID = r.ActivityID
+					rt.DB.Create(&c)
+				}
 			}
 		}
 	}
-	rt.Log.Println("Transaction: start")
+	rt.Log.Println("Transaction: end")
 	return nil
 }
