@@ -39,7 +39,7 @@ func main() {
 		log.Fatal(e)
 	}
 
-	db, err := gorm.Open("sqlite3", "test.db")
+	db, err := gorm.Open("sqlite3", "eoy.sqlite3")
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
