@@ -73,7 +73,6 @@ func (rt *Runtime) NewThisYearSheet() Sheet {
 	sheet := Sheet{
 		Titles: []string{
 			fmt.Sprintf("Results for %v", rt.Year),
-			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,
 		KeyNames:  []string{"Year"},
@@ -129,7 +128,6 @@ func (rt *Runtime) NewYOYearSheet() Sheet {
 	sheet := Sheet{
 		Titles: []string{
 			"Year over Year results",
-			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      "Year over year",
 		KeyNames:  []string{"Year"},

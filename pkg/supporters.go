@@ -100,7 +100,6 @@ func (rt *Runtime) NewAllDonorsSheet() Sheet {
 	sheet := Sheet{
 		Titles: []string{
 			fmt.Sprintf("Ranked donors for %d", rt.Year),
-			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,
 		KeyNames:  []string{"First Name", "Last Name"},
@@ -119,7 +118,6 @@ func (rt *Runtime) NewTopDonorsSheet() Sheet {
 	sheet := Sheet{
 		Titles: []string{
 			fmt.Sprintf("Top %d donors for %d", rt.TopDonorLimit, rt.Year),
-			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,
 		KeyNames:  []string{"First Name", "Last Name"},

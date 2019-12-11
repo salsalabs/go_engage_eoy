@@ -118,7 +118,6 @@ func (rt *Runtime) NewMOMonthSheet() Sheet {
 	sheet := Sheet{
 		Titles: []string{
 			"Month over Month results",
-			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      "Month over month",
 		KeyNames:  []string{"Month", "Year"},
