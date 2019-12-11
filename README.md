@@ -14,9 +14,9 @@ report is in the form of an Excel spreadsheet.  Each sheet in the spreadsheet re
 - Current Year
 - Months in the current year
 - All Years
-- Each month and all years
+- MOnth-over-month across all years
 - All donors
-- Top donors (nominally the top 20)
+- Top donors (defaults to 20)
 - Donation form name
 
 Each row of metrics contains identifiers about the metric (year, month, donor, etc.) and a common set of statistics.
