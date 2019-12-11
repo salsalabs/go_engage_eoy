@@ -196,4 +196,4 @@ Note that using the same name and year more than once will overwrite the older v
 # Questions?  Comments?
 
 If you have questions, then plesae use the [Issues](https://github.com/salsalabs/goengage-eoy/issues) tab.  Don't
-waste your time bothering the folks at Salsalabs support.   Not worth your trouble...
+waste your time bothering the folks at Salsalabs support.  
