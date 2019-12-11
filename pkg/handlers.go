@@ -184,9 +184,12 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 		}
 		g.Largest = math.Max(g.Largest, t.Amount)
 		if t.Amount > 0.0 {
-			g.Smallest = math.Min(g.Smallest, t.Amount)
+			if g.Smallest < 1.0 {
+				g.Smallest = t.Amount
+			} else {
+				g.Smallest = math.Min(g.Smallest, t.Amount)
+			}
 		}
-
 		rt.DB.Model(&g).Updates(&g)
 	}
 }
