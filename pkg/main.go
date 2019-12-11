@@ -15,21 +15,22 @@ import (
 
 //Runtime contains the variables that we need to run this application.
 type Runtime struct {
-	Env           *goengage.Environment
-	DB            *gorm.DB
-	Log           *log.Logger
-	Channels      []chan goengage.Fundraise
-	Spreadsheet   *excelize.File
-	CountStyle    int
-	ValueStyle    int
-	KeyStyle      int
-	TitleStyle    int
-	HeaderStyle   int
-	TopDonorLimit int
-	Year          int
-	YearStart     time.Time
-	YearEnd       time.Time
-	OrgLocation   *time.Location
+	Env             *goengage.Environment
+	DB              *gorm.DB
+	Log             *log.Logger
+	Channels        []chan goengage.Fundraise
+	Spreadsheet     *excelize.File
+	CountStyle      int
+	ValueStyle      int
+	KeyStyle        int
+	TitleStyle      int
+	HeaderStyle     int
+	StatHeaderStyle int
+	TopDonorLimit   int
+	Year            int
+	YearStart       time.Time
+	YearEnd         time.Time
+	OrgLocation     *time.Location
 }
 
 //KeyValuer returns a key value for the specified offset.
@@ -119,13 +120,22 @@ func (rt *Runtime) Titles(sheet Sheet) (row int) {
 			panic(err)
 		}
 	}
+	row++
+	return row
+}
+
+//StatHeaders show the topics for stats.  Most of the headers
+//will be two columns to cover count and amount.
+func (rt *Runtime) StatHeaders(sheet Sheet, row int) int {
+	s := Stat{}
+	s.Headers(rt, sheet.Name, row, len(sheet.KeyNames))
+	row++
 	return row
 }
 
 //Headers decorates the data headers for a spreadsheet.
-func (rt *Runtime) Headers(sheet Sheet) (row int) {
+func (rt *Runtime) Headers(sheet Sheet, row int) int {
 	//Key headers are followed by stat headers on a single row.
-	row = len(sheet.Titles)
 	rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 	for i, t := range sheet.KeyNames {
 		s := sheet.KeyStyles[i]
@@ -167,7 +177,8 @@ func (rt *Runtime) Widths(sheet Sheet, row int) int {
 func (rt *Runtime) Decorate(sheet Sheet) (row int) {
 	_ = rt.Spreadsheet.NewSheet(sheet.Name)
 	row = rt.Titles(sheet)
-	row = rt.Headers(sheet)
+	row = rt.StatHeaders(sheet, row)
+	row = rt.Headers(sheet, row)
 	row = sheet.Filler.Fill(rt, sheet, row, 0)
 	row = rt.Widths(sheet, row)
 	return row
@@ -215,17 +226,17 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		Font:         f,
 	}
 	rt.KeyStyle = rt.StyleInt(s)
-
-	f = font{Size: 16, Bold: true}
+	a := alignment{Horizontal: "center"}
 	s = style{
 		NumberFormat: 0,
 		Font:         f,
+		Alignment:    a,
 	}
 	rt.HeaderStyle = rt.StyleInt(s)
-	a := alignment{Horizontal: "center", ShrinkToFit: true}
+	f2 := font{Size: 16, Bold: true}
 	s = style{
 		NumberFormat: 0,
-		Font:         f,
+		Font:         f2,
 		Alignment:    a,
 	}
 	rt.TitleStyle = rt.StyleInt(s)

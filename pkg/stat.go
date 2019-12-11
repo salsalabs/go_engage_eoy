@@ -1,6 +1,8 @@
 package eoy
 
-import "time"
+import (
+	"time"
+)
 
 //Stat is used to store the usual statistics about a set of donations.
 type Stat struct {
@@ -49,25 +51,25 @@ func (s Stat) Header(i int) string {
 	case ID:
 		return "Internal Key"
 	case AllCount:
-		return "All Count"
+		return "Count"
 	case AllAmount:
-		return "All Amount"
+		return "Amount"
 	case OneTimeCount:
-		return "OneTime Count"
+		return "Count"
 	case OneTimeAmount:
-		return "OneTime Amount"
+		return "Amount"
 	case RecurringCount:
-		return "Recurring Count"
+		return "Count"
 	case RecurringAmount:
-		return "Recurring Amount"
+		return "Amount"
 	case OfflineCount:
-		return "Offline Count"
+		return "Count"
 	case OfflineAmount:
-		return "Offline Amount"
+		return "Amount"
 	case RefundsCount:
-		return "Refunds Count"
+		return "Count"
 	case RefundsAmount:
-		return "Refunds Amount"
+		return "Amount"
 	case Largest:
 		return "Largest"
 	case Smallest:
@@ -108,6 +110,37 @@ func (s Stat) Value(i int) interface{} {
 		return s.Largest
 	}
 	return nil
+}
+
+//FieldHeader returns the field header from a stat record.  Returns
+//header text and the number of columns.  A null name indicates
+//that the header does not have a column of its own.
+func (s Stat) FieldHeader(i int) (name *string, c int) {
+	t := ""
+	switch FieldOrder(i) {
+	case AllCount:
+		t = "All"
+		c = 2
+	case OneTimeCount:
+		t = "One Time"
+		c = 2
+	case RecurringCount:
+		t = "Recurring"
+		c = 2
+	case OfflineCount:
+		t = "Offline"
+		c = 2
+	case RefundsCount:
+		t = "Refunds"
+		c = 2
+	case Largest:
+		t = "Overall"
+		c = 2
+	}
+	if len(t) > 0 {
+		name = &t
+	}
+	return name, c
 }
 
 //Style returns an Excel style code from a stat record.
@@ -151,6 +184,25 @@ func (s Stat) Fill(rt *Runtime, sheetName string, row, col int) int {
 		y := s.Style(rt, f)
 		// "-1" because we're skipping the ID...
 		rt.Cell(sheetName, row, col+f-1, v, y)
+	}
+	row++
+	return row
+}
+
+//Headers adds Excel cells has headers for each stat type (all, one time, recurring, etc.)
+func (s Stat) Headers(rt *Runtime, sheetName string, row, col int) int {
+	for i := AllCount; i < StatFieldCount; i++ {
+		f := int(i)
+		n, c := s.FieldHeader(f)
+		if n != nil {
+			rt.Cell(sheetName, row, col+f-1, *n, rt.HeaderStyle)
+			left := Axis(row, f)
+			right := Axis(row, f+c-1)
+			err := rt.Spreadsheet.MergeCell(sheetName, left, right)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 	row++
 	return row
