@@ -49,7 +49,7 @@ func (r MonthResult) KeyValue(i int) (key interface{}) {
 }
 
 //FillKeys implements KeyFiller by filling Excel cells with keys from the
-//year table.
+//month table.
 func (r MonthResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 	for j := 0; j < len(sheet.KeyNames); j++ {
 		v := r.KeyValue(j)
@@ -60,7 +60,7 @@ func (r MonthResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 }
 
 //FillKeys implements KeyFiller by filling Excel cells with keys from the
-//year table.
+//month table.
 func (r MOMonthResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 	m := MonthResult{}
 	return m.FillKeys(rt, sheet, row, col)
@@ -69,7 +69,7 @@ func (r MOMonthResult) FillKeys(rt *Runtime, sheet Sheet, row, col int) int {
 //Fill implements Filler by filling in a spreadsheet using data from the years table.
 func (r Month) Fill(rt *Runtime, sheet Sheet, row, col int) int {
 	var a []MonthResult
-	rt.DB.Order("id, year desc").Where("months.year = ?", rt.Year).Table("months").Select("month, year, stats.*").Joins("left join stats on stats.id = months.id").Scan(&a)
+	rt.DB.Order("id").Where("months.year = ?", rt.Year).Table("months").Select("month, stats.*").Joins("left join stats on stats.id = months.id").Scan(&a)
 	for _, r := range a {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		r.FillKeys(rt, sheet, row, 0)
@@ -102,7 +102,7 @@ func (rt *Runtime) NewMonthSheet() Sheet {
 			fmt.Sprintf("Results by month for %d", rt.Year),
 		},
 		Name:      name,
-		KeyNames:  []string{"Month", "Year"},
+		KeyNames:  []string{"Month"},
 		KeyStyles: []int{rt.KeyStyle, rt.KeyStyle},
 		Filler:    filler,
 		KeyFiller: result,
