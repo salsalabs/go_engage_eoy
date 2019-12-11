@@ -9,8 +9,8 @@ the typical end-of-year reporting that occurs after every Giving Tuesday.
 
 # Summary
 
-This application accepts an Engage API Token, then provides the usual end-of-year reports that Salsa's client want.  The 
-report is in the form of an Excel spreadsheet.  Each set represents a single set of metrics.  At this writing, the metrics are
+This application accepts an Engage API Token, then provides the usual end-of-year reports that Salsa's clients want.  The 
+report is in the form of an Excel spreadsheet.  Each sheet in the spreadsheet represents a single set of metrics.
 - Current Year
 - Months in the current year
 - All Years
@@ -19,8 +19,7 @@ report is in the form of an Excel spreadsheet.  Each set represents a single set
 - Top donors (nominally the top 20)
 - Donation form name
 
-Each row of metrics contains
-identifiers about the metric (year, month, donor, etc.) and a common set of statistics.
+Each row of metrics contains identifiers about the metric (year, month, donor, etc.) and a common set of statistics.
 
 These are the common statistics collected for each metric.
 
@@ -88,7 +87,7 @@ export PATH=~/go/bin:$PATH
 1.  Login to apply the path changes.
 
 In Windows, you'll need to change the PATH environment variable.  Please use
-Cortana or the Googles to search for "Environment variables".
+Cortana or the Googles to search for "environment variables".
 
 ### Install the app
 The application is stored in a Github repository. Open
@@ -110,10 +109,10 @@ HOMEDIR
    + src
       |
       + github.com
-      |
-      + (other directories)
-      |
-      + salsalabs
+        |
+        + (other directories)
+        |
+        + salsalabs
             |
             + goengage-eoy
 ```
@@ -140,7 +139,10 @@ directory in your home dir.
 
 # Operations
 
-The build process created an executable application called `goengage-eoy`.  
+The  `goengage-eoy` application runs by accepting command line arguments.  You'll need to 
+open a terminal window (or remain the one opened during installation).  Here's a summary
+of the command-line arguments.
+
 ```
 goengage-eoy --help
 usage: goengage-eoy --login=LOGIN --org=ORG [<flags>]
@@ -160,11 +162,11 @@ Flags:
 
 |Flag|Description|
 |----------|----------|
-|--login|Filename of a YAML file containing the API token to use.  More info below|
+|--login|Filename of a YAML file containing the API token to use.  More info below.|
 |--org|The organization's name.  Used to name the spreadsheet|
-|--year|The year to report on.  Defaults to the current year (2019 at this writing)|
+|--year|The year to report on.  Defaults to the current year.|
 |--top|Number of reords to appear in the top donor list.  Defaults to 20.|
-|--timezone|Timezone abbreviation for the organization.  Useful for donations made in the last minute of a year.|
+|--timezone|Timezone abbreviation for the organization.  Useful for accurately reporting donations made in the last minute of a year.|
 
 ## YAML file contents
 The program requires a YAML file containing the Engage API token to use to retrieve data.  The file has this general format.
