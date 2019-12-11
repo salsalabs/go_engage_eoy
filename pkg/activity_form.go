@@ -62,8 +62,7 @@ func (rt *Runtime) NewActivityFormSheet() Sheet {
 	result := ActivityFormResult{}
 	sheet := Sheet{
 		Titles: []string{
-			"Results by activity form",
-			"Provided by the Custom Success group At Salsalabs",
+			"Results by Activity Form",
 		},
 		Name:      "Activity forms",
 		KeyNames:  []string{"ActivityForm"},
@@ -71,7 +70,5 @@ func (rt *Runtime) NewActivityFormSheet() Sheet {
 		Filler:    filler,
 		KeyFiller: result,
 	}
-	w, _ := rt.Spreadsheet.GetColWidth(sheet.Name, "A")
-	_ = rt.Spreadsheet.SetColWidth(sheet.Name, "A", "A", w*4.0)
 	return sheet
 }
