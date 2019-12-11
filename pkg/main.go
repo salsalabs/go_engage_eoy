@@ -83,6 +83,45 @@ type style struct {
 	Alignment    alignment `json:"alignment"`
 }
 
+//Axis accepts zero-based row and column and returns an Excel location.
+//Note: Column offset is limited to the range of columns for this app --
+//one alpha digit.
+func Axis(r, c int) string {
+	cols := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	s := string(cols[c])
+	return fmt.Sprintf("%v%v", s, r+1)
+}
+
+//Headers decorates the data headers for a spreadsheet.
+func (rt *Runtime) Headers(sheet Sheet, row int) int {
+	rt.Spreadsheet.InsertRow(sheet.Name, row+1)
+	//Key headers are followed by stat headers on a single row.
+	for i, t := range sheet.KeyNames {
+		s := sheet.KeyStyles[i]
+		rt.Cell(sheet.Name, row, i, t, s)
+	}
+	stat := Stat{}
+	for i := int(AllCount); i < int(StatFieldCount); i++ {
+		//"-1" because we are skipping ID
+		col := len(sheet.KeyNames) + i - 1
+		h := stat.Header(i)
+		s := stat.Style(rt, i)
+		rt.Cell(sheet.Name, row, col, h, s)
+	}
+	row++
+	return row
+}
+
+//StatHeaders show the topics for stats.  Most of the headers
+//will be two columns to cover count and amount.
+func (rt *Runtime) StatHeaders(sheet Sheet, row int) int {
+	rt.Spreadsheet.InsertRow(sheet.Name, row+1)
+	s := Stat{}
+	s.Headers(rt, sheet.Name, row, len(sheet.KeyNames))
+	row++
+	return row
+}
+
 //StyleInt converts a style for use in an Excelize spreadsheet.
 func (rt *Runtime) StyleInt(s style) int {
 	b, err := json.Marshal(s)
@@ -96,21 +135,13 @@ func (rt *Runtime) StyleInt(s style) int {
 	return x
 }
 
-//Axis accepts zero-based row and column and returns an Excel location.
-//Note: Column offset is limited to the range of columns for this app --
-//one alpha digit.
-func Axis(r, c int) string {
-	cols := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	s := string(cols[c])
-	return fmt.Sprintf("%v%v", s, r+1)
-}
-
 //Titles inserts titles into a sheet and decorates them.
 func (rt *Runtime) Titles(sheet Sheet) (row int) {
 	//Titles go on separate lines
 	for row, t := range sheet.Titles {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
 		rt.Cell(sheet.Name, row, 0, t, rt.TitleStyle)
+		// Merge cells and put the title in the middle.
 		// Sorry, "2" is a magic number for now...
 		w := len(sheet.KeyNames) + int(StatFieldCount) - 2
 		left := Axis(row, 0)
@@ -119,35 +150,6 @@ func (rt *Runtime) Titles(sheet Sheet) (row int) {
 		if err != nil {
 			panic(err)
 		}
-	}
-	row++
-	return row
-}
-
-//StatHeaders show the topics for stats.  Most of the headers
-//will be two columns to cover count and amount.
-func (rt *Runtime) StatHeaders(sheet Sheet, row int) int {
-	s := Stat{}
-	s.Headers(rt, sheet.Name, row, len(sheet.KeyNames))
-	row++
-	return row
-}
-
-//Headers decorates the data headers for a spreadsheet.
-func (rt *Runtime) Headers(sheet Sheet, row int) int {
-	//Key headers are followed by stat headers on a single row.
-	rt.Spreadsheet.InsertRow(sheet.Name, row+1)
-	for i, t := range sheet.KeyNames {
-		s := sheet.KeyStyles[i]
-		rt.Cell(sheet.Name, row, i, t, s)
-	}
-	stat := Stat{}
-	for i := int(AllCount); i < int(StatFieldCount); i++ {
-		//"-1" because we are skipping ID
-		col := len(sheet.KeyNames) + i - 1
-		h := stat.Header(i)
-		s := stat.Style(rt, i)
-		rt.Cell(sheet.Name, row, col, h, s)
 	}
 	row++
 	return row
@@ -226,6 +228,7 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		Font:         f,
 	}
 	rt.KeyStyle = rt.StyleInt(s)
+
 	a := alignment{Horizontal: "center"}
 	s = style{
 		NumberFormat: 0,
@@ -233,6 +236,7 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		Alignment:    a,
 	}
 	rt.HeaderStyle = rt.StyleInt(s)
+
 	f2 := font{Size: 16, Bold: true}
 	s = style{
 		NumberFormat: 0,
@@ -240,6 +244,7 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 		Alignment:    a,
 	}
 	rt.TitleStyle = rt.StyleInt(s)
+
 	return &rt
 }
 
