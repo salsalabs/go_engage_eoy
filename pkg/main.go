@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
@@ -68,10 +69,17 @@ type font struct {
 	Color  string `json:"color,omitempty"`
 }
 
+//alignment contains alignment definitions for a style.
+type alignment struct {
+	Horizontal  string `json:"horizontal,omitempty"`
+	ShrinkToFit bool   `json:"shrink_to_fit,omitempty"`
+}
+
 //style contains style declarations, ready to marshall into JSON.
 type style struct {
-	NumberFormat int  `json:"number_format,omitempty"`
-	Font         font `json:"font"`
+	NumberFormat int       `json:"number_format,omitempty"`
+	Font         font      `json:"font"`
+	Alignment    alignment `json:"alignment"`
 }
 
 //StyleInt converts a style for use in an Excelize spreadsheet.
@@ -88,24 +96,37 @@ func (rt *Runtime) StyleInt(s style) int {
 }
 
 //Axis accepts zero-based row and column and returns an Excel location.
-//Note: Excel location is limited to the range of columns for this app!
+//Note: Column offset is limited to the range of columns for this app --
+//one alpha digit.
 func Axis(r, c int) string {
 	cols := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	s := string(cols[c])
 	return fmt.Sprintf("%v%v", s, r+1)
 }
 
-//Decorate a sheet by putting it into the spreadsheet as an Excel sheet.
-func (rt *Runtime) Decorate(sheet Sheet) (row int) {
-	_ = rt.Spreadsheet.NewSheet(sheet.Name)
+//Titles inserts titles into a sheet and decorates them.
+func (rt *Runtime) Titles(sheet Sheet) (row int) {
 	//Titles go on separate lines
 	for row, t := range sheet.Titles {
 		rt.Spreadsheet.InsertRow(sheet.Name, row+1)
-		rt.Cell(sheet.Name, row, 0, t, rt.HeaderStyle)
+		rt.Cell(sheet.Name, row, 0, t, rt.TitleStyle)
+		// Sorry, "2" is a magic number for now...
+		w := len(sheet.KeyNames) + int(StatFieldCount) - 2
+		left := Axis(row, 0)
+		right := Axis(row, w)
+		err := rt.Spreadsheet.MergeCell(sheet.Name, left, right)
+		if err != nil {
+			panic(err)
+		}
 	}
+	return row
+}
+
+//Headers decorates the data headers for a spreadsheet.
+func (rt *Runtime) Headers(sheet Sheet) (row int) {
+	//Key headers are followed by stat headers on a single row.
 	row = len(sheet.Titles)
 	rt.Spreadsheet.InsertRow(sheet.Name, row+1)
-	//Key headers are followed by stat headers on a single row.
 	for i, t := range sheet.KeyNames {
 		s := sheet.KeyStyles[i]
 		rt.Cell(sheet.Name, row, i, t, s)
@@ -119,7 +140,36 @@ func (rt *Runtime) Decorate(sheet Sheet) (row int) {
 		rt.Cell(sheet.Name, row, col, h, s)
 	}
 	row++
+	return row
+}
+
+//Widths sets the widths in a sheet.
+func (rt *Runtime) Widths(sheet Sheet, row int) int {
+	left := Axis(row, 0)
+	left = left[0:1]
+	// Sorry, "2" is a magic number for now...
+	w := len(sheet.KeyNames) + int(StatFieldCount) - 2
+	right := Axis(row, w)
+	right = right[0:1]
+	err := rt.Spreadsheet.SetColWidth(sheet.Name, left, right, 16.0)
+	if err != nil {
+		panic(err)
+	}
+	//Kludge!  Activity form names are a lot longer than supporter names.
+	if strings.Contains(sheet.Name, "Activity") {
+		w, _ := rt.Spreadsheet.GetColWidth(sheet.Name, "A")
+		_ = rt.Spreadsheet.SetColWidth(sheet.Name, "A", "A", w*4.0)
+	}
+	return row
+}
+
+//Decorate a sheet by putting it into the spreadsheet as an Excel sheet.
+func (rt *Runtime) Decorate(sheet Sheet) (row int) {
+	_ = rt.Spreadsheet.NewSheet(sheet.Name)
+	row = rt.Titles(sheet)
+	row = rt.Headers(sheet)
 	row = sheet.Filler.Fill(rt, sheet, row, 0)
+	row = rt.Widths(sheet, row)
 	return row
 }
 
@@ -135,11 +185,11 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	orgLocation, err := time.LoadLocation(loc)
 
 	rt := Runtime{
-		Env:         e,
-		DB:          db,
-		Log:         log.New(w, "EOY: ", log.LstdFlags),
-		Channels:    channels,
-		Spreadsheet: excelize.NewFile(),
+		Env:           e,
+		DB:            db,
+		Log:           log.New(w, "EOY: ", log.LstdFlags),
+		Channels:      channels,
+		Spreadsheet:   excelize.NewFile(),
 		Year:          year,
 		TopDonorLimit: topLimit,
 		YearStart:     yearStart,
@@ -166,12 +216,19 @@ func NewRuntime(e *goengage.Environment, db *gorm.DB, channels []chan goengage.F
 	}
 	rt.KeyStyle = rt.StyleInt(s)
 
-	f = font{Size: 14, Bold: true, Color: "darkblue"}
+	f = font{Size: 16, Bold: true}
 	s = style{
 		NumberFormat: 0,
 		Font:         f,
 	}
 	rt.HeaderStyle = rt.StyleInt(s)
+	a := alignment{Horizontal: "center", ShrinkToFit: true}
+	s = style{
+		NumberFormat: 0,
+		Font:         f,
+		Alignment:    a,
+	}
+	rt.TitleStyle = rt.StyleInt(s)
 	return &rt
 }
 
