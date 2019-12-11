@@ -100,7 +100,6 @@ func (rt *Runtime) NewMonthSheet() Sheet {
 	sheet := Sheet{
 		Titles: []string{
 			fmt.Sprintf("Results by month for %d", rt.Year),
-			"Provided by the Custom Success group At Salsalabs",
 		},
 		Name:      name,
 		KeyNames:  []string{"Month", "Year"},
