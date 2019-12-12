@@ -15,11 +15,8 @@ import (
 )
 
 const (
-	sleepDuration   = "10s"
 	defaultTimezone = "Eastern"
 )
-
-type actor func(rt *eoy.Runtime, c chan goengage.Fundraise) (err error)
 
 func main() {
 	t := time.Now()
