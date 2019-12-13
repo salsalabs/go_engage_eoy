@@ -1,7 +1,6 @@
 package eoy
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -183,8 +182,7 @@ func (s Stat) Fill(rt *Runtime, sheetName string, row, col int) int {
 		f := int(i)
 		v := s.Value(f)
 		y := s.Style(rt, f)
-		// "-1" because we're skipping the ID...
-		rt.Cell(sheetName, row, col+f-1, v, y)
+		rt.Cell(sheetName, row, col+f-int(AllCount), v, y)
 	}
 	row++
 	return row
@@ -192,16 +190,15 @@ func (s Stat) Fill(rt *Runtime, sheetName string, row, col int) int {
 
 //Headers adds Excel cells has headers for each stat type (all, one time, recurring, etc.)
 func (s Stat) Headers(rt *Runtime, sheetName string, row, col int) int {
-	fmt.Printf("Headers, begin: %v, row: %v, col: %v\n", sheetName, row, col)
 	for i := AllCount; i < StatFieldCount; i++ {
 		f := int(i)
 		n, c := s.FieldHeader(f)
+		colOffset := col + f - int(AllCount)
 		if n != nil {
 			rt.Cell(sheetName, row, col+f-1, *n, rt.HeaderStyle)
-			fmt.Printf("Headers, col:   %v, row: %v, col: %v, name: %v\n", sheetName, row, col+f-1, *n)
 			if c > 1 {
-				left := Axis(row, f)
-				right := Axis(row, f+c-1)
+				left := Axis(row, colOffset)
+				right := Axis(row, colOffset+c-1)
 				err := rt.Spreadsheet.MergeCell(sheetName, left, right)
 				if err != nil {
 					panic(err)
@@ -210,6 +207,5 @@ func (s Stat) Headers(rt *Runtime, sheetName string, row, col int) int {
 		}
 	}
 	row++
-	fmt.Printf("Headers, end:    %v, row: %v, col: %v\n", sheetName, row, col)
 	return row
 }
