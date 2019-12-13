@@ -13,6 +13,13 @@ import (
 	goengage "github.com/salsalabs/goengage/pkg"
 )
 
+const (
+	//DefaultColumnWidth is the Excel size for a column that contains numbers.
+	DefaultColumnWidth = 14.0
+	//ActivityFormWidth is the Excel size for form names.
+	ActivityFormWidth = 60.0
+)
+
 //Runtime contains the variables that we need to run this application.
 type Runtime struct {
 	Env             *goengage.Environment
@@ -163,14 +170,13 @@ func (rt *Runtime) Widths(sheet Sheet, row int) int {
 	w := len(sheet.KeyNames) + int(StatFieldCount) - 2
 	right := Axis(row, w)
 	right = right[0:1]
-	err := rt.Spreadsheet.SetColWidth(sheet.Name, left, right, 16.0)
+	err := rt.Spreadsheet.SetColWidth(sheet.Name, left, right, DefaultColumnWidth)
 	if err != nil {
 		panic(err)
 	}
 	//Kludge!  Activity form names are a lot longer than supporter names.
 	if strings.Contains(sheet.Name, "Activity") {
-		w, _ := rt.Spreadsheet.GetColWidth(sheet.Name, "A")
-		_ = rt.Spreadsheet.SetColWidth(sheet.Name, "A", "A", w*4.0)
+		_ = rt.Spreadsheet.SetColWidth(sheet.Name, "A", "A", ActivityFormWidth)
 	}
 	return row
 }
