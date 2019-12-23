@@ -105,7 +105,6 @@ func Drive(rt *Runtime, done chan bool) (err error) {
 		rqt.Payload.Offset = rqt.Payload.Offset + count
 		count = int32(len(resp.Payload.Activities))
 		for _, r := range resp.Payload.Activities {
-			rt.Log.Printf("%v Drive\n", r.ActivityID)
 			// Need this here so that the stats will work.
 			r.Year = r.ActivityDate.Year()
 			r.Month = int(r.ActivityDate.Month())
@@ -135,7 +134,6 @@ func Form(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		}
 		if rt.GoodYear(r.ActivityDate) {
 			s := ActivityForm{}
-			rt.Log.Printf("%v Form\n", r.ActivityID)
 			rt.DB.Where("id = ?", r.ActivityFormID).First(&s)
 			if s.CreatedDate == nil {
 				s.ID = r.ActivityFormID
@@ -161,7 +159,9 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 		g.CreatedDate = &t
 		rt.DB.Create(&g)
 	}
+	rt.Log.Printf("Stats pre-update: %+v\n", g)
 	for _, t := range r.Transactions {
+		rt.Log.Printf("Transaction: %+v\n", t)
 		g.AllCount++
 		g.AllAmount = g.AllAmount + t.Amount
 		if r.WasImported {
@@ -190,12 +190,13 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 				g.Smallest = math.Min(g.Smallest, t.Amount)
 			}
 		}
-		rt.DB.Model(&g).Updates(&g)
 	}
+	rt.DB.Model(&g).Updates(&g)
+	rt.Log.Printf("Stats post-update: %+v\n\n", g)
 }
 
-//Stats reads a channel of Stats to retrieve ActivityIDs.  Those
-//are used to populate the Activity table in the database.
+//Stats reads a channel of Stats.  Those records are used to populate
+//Stats records for each of the accumulation topics.
 func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
 	rt.Log.Println("Stats: start")
 	for true {
@@ -203,7 +204,6 @@ func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Stats\n", r.ActivityID)
 		update(rt, r, r.ActivityID)
 		update(rt, r, r.SupporterID)
 		update(rt, r, r.ActivityFormID)
@@ -227,8 +227,6 @@ func Supporter(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			break
 		}
 		if rt.GoodYear(r.ActivityDate) {
-			rt.Log.Printf("%v Supporter\n", r.ActivityID)
-
 			s := goengage.Supporter{
 				SupporterID: r.SupporterID,
 			}
