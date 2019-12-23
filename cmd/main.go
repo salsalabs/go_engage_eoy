@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	sleepDuration   = "10s"
 	defaultTimezone = "Eastern"
 )
 
@@ -60,10 +59,10 @@ func main() {
 	functions := []actor{
 		eoy.Activity,
 		eoy.Form,
-		eoy.Stats,
 		eoy.Supporter,
 		eoy.Transaction,
 		eoy.Date,
+		eoy.Stats,
 	}
 	//Channel used by the downstream processors...
 	var channels []chan goengage.Fundraise
@@ -110,8 +109,7 @@ func main() {
 		wg.Done()
 	})(rt, &wg, done)
 	<-done
-	//d, _ := time.ParseDuration(sleepDuration)
-	//time.Sleep(d)
+
 	rt.Log.Printf("Waiting for tasks to complete.")
 	wg.Wait()
 	rt.Log.Printf("All tasks are complete.  Time to build the output.")
