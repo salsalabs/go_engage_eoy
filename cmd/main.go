@@ -39,7 +39,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err := gorm.Open("sqlite3", "eoy.sqlite3")
+	fn := fmt.Sprintf("%v %d EOY.sqlite3", *org, *year)
+
+	db, err := gorm.Open("sqlite3", fn)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -113,11 +115,11 @@ func main() {
 	rt.Log.Printf("Waiting for tasks to complete.")
 	wg.Wait()
 	rt.Log.Printf("All tasks are complete.  Time to build the output.")
-	fmt.Println("Harvest start")
-	fn := fmt.Sprintf("%v %d EOY.xlsx", *org, *year)
+	rt.Log.Println("Harvest start")
+	fn = fmt.Sprintf("%v %d EOY.xlsx", *org, *year)
 	err = rt.Harvest(fn)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Harvest end")
+	rt.Log.Println("Harvest end")
 }
