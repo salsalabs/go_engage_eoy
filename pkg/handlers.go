@@ -19,7 +19,6 @@ func Activity(rt *Runtime, c chan goengage.Fundraise) (err error) {
 			break
 		}
 		if rt.GoodYear(r.ActivityDate) {
-			rt.Log.Printf("%v Activity\n", r.ActivityID)
 			rt.DB.Create(&r)
 		}
 	}
@@ -37,7 +36,6 @@ func Date(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		rt.Log.Printf("%v Dates\n", r.ActivityID)
 		y := Year{
 			ID: r.Year,
 		}
@@ -159,40 +157,41 @@ func update(rt *Runtime, r goengage.Fundraise, key string) {
 		g.CreatedDate = &t
 		rt.DB.Create(&g)
 	}
-	rt.Log.Printf("Stats pre-update: %+v\n", g)
-	for _, t := range r.Transactions {
-		rt.Log.Printf("Transaction: %+v\n", t)
-		g.AllCount++
-		g.AllAmount = g.AllAmount + t.Amount
-		if r.WasImported {
-			g.OfflineCount++
-			g.OfflineAmount += t.Amount
-		} else {
-			switch r.DonationType {
-			case goengage.OneTime:
-				g.OneTimeCount++
-				g.OneTimeAmount += t.Amount
-			case goengage.Recurring:
-				g.RecurringCount++
-				g.RecurringAmount += t.Amount
-			}
+	amount := 0.0
+	if r.WasImported {
+		g.OfflineCount++
+		g.OfflineAmount += r.OneTimeAmount
+		amount = g.OfflineAmount
+	} else {
+		switch r.DonationType {
+		case goengage.OneTime:
+			g.OneTimeCount++
+			g.OneTimeAmount += r.OneTimeAmount
+			amount = g.OneTimeAmount
+		case goengage.Recurring:
+			g.RecurringCount++
+			g.RecurringAmount += r.RecurringAmount
+			amount = g.RecurringAmount
+		}
+		for _, t := range r.Transactions {
 			switch t.Type {
 			case goengage.Refund:
 				g.RefundsCount++
 				g.RefundsAmount += t.Amount
 			}
 		}
-		g.Largest = math.Max(g.Largest, t.Amount)
-		if t.Amount > 0.0 {
-			if g.Smallest < 1.0 {
-				g.Smallest = t.Amount
-			} else {
-				g.Smallest = math.Min(g.Smallest, t.Amount)
-			}
+	}
+	g.AllCount++
+	g.AllAmount += amount
+	g.Largest = math.Max(g.Largest, amount)
+	if amount > 0.0 {
+		if g.Smallest < 1.0 {
+			g.Smallest = amount
+		} else {
+			g.Smallest = math.Min(g.Smallest, amount)
 		}
 	}
 	rt.DB.Model(&g).Updates(&g)
-	rt.Log.Printf("Stats post-update: %+v\n\n", g)
 }
 
 //Stats reads a channel of Stats.  Those records are used to populate
@@ -204,13 +203,38 @@ func Stats(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-		update(rt, r, r.ActivityID)
-		update(rt, r, r.SupporterID)
-		update(rt, r, r.ActivityFormID)
-		t := fmt.Sprintf("%d", r.Year)
-		update(rt, r, t)
-		t = fmt.Sprintf("%d-%02d", r.Year, r.Month)
-		update(rt, r, t)
+		if rt.GoodYear(r.ActivityDate) {
+			//Debug with Nicaragua
+			if r.ActivityFormID == "dd4fc813-c019-4408-95dd-7bf708fcbac7" {
+				fmt.Printf("%-10s %-36s %-36s %-20s %6.2f + %6.2f = %6.2f\n",
+					r.ActivityFormName,
+					r.ActivityID,
+					r.ActivityDate,
+					r.DonationType,
+					r.OneTimeAmount,
+					r.RecurringAmount,
+					r.TotalReceivedAmount,
+				)
+				for _, t := range r.Transactions {
+					fmt.Printf("%-10s %-36s %-36s Transaction: %-12s %-12s  %7.2f\n",
+						r.ActivityFormName,
+						r.ActivityID,
+						r.ActivityDate,
+						t.Reason,
+						t.Type,
+						t.Amount,
+					)
+
+				}
+			}
+			update(rt, r, r.ActivityID)
+			update(rt, r, r.SupporterID)
+			update(rt, r, r.ActivityFormID)
+			t := fmt.Sprintf("%d", r.Year)
+			update(rt, r, t)
+			t = fmt.Sprintf("%d-%02d", r.Year, r.Month)
+			update(rt, r, t)
+		}
 	}
 	rt.Log.Println("Stats: end")
 
@@ -261,8 +285,6 @@ func Transaction(rt *Runtime, c chan goengage.Fundraise) (err error) {
 		if !ok {
 			break
 		}
-
-		rt.Log.Printf("%v Transaction\n", r.ActivityID)
 		if rt.GoodYear(r.ActivityDate) {
 			if len(r.Transactions) != 0 {
 				for _, c := range r.Transactions {
